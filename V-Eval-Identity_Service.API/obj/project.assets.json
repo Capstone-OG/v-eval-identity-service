@@ -33,6 +33,42 @@
             "related": ".pdb;.xml"
           }
         }
+      },
+      "V-Eval-Identity_Service.Application/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "V-Eval-Identity_Service.Domain": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/V-Eval-Identity_Service.Application.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/V-Eval-Identity_Service.Application.dll": {}
+        }
+      },
+      "V-Eval-Identity_Service.Domain/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "compile": {
+          "bin/placeholder/V-Eval-Identity_Service.Domain.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/V-Eval-Identity_Service.Domain.dll": {}
+        }
+      },
+      "V-Eval-Identity_Service.Infrastructure/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "V-Eval-Identity_Service.Application": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/V-Eval-Identity_Service.Infrastructure.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/V-Eval-Identity_Service.Infrastructure.dll": {}
+        }
       }
     }
   },
@@ -67,11 +103,28 @@
         "microsoft.openapi.1.6.17.nupkg.sha512",
         "microsoft.openapi.nuspec"
       ]
+    },
+    "V-Eval-Identity_Service.Application/1.0.0": {
+      "type": "project",
+      "path": "../V-Eval-Identity_Service.Application/V-Eval-Identity_Service.Application.csproj",
+      "msbuildProject": "../V-Eval-Identity_Service.Application/V-Eval-Identity_Service.Application.csproj"
+    },
+    "V-Eval-Identity_Service.Domain/1.0.0": {
+      "type": "project",
+      "path": "../V-Eval-Identity_Service.Domain/V-Eval-Identity_Service.Domain.csproj",
+      "msbuildProject": "../V-Eval-Identity_Service.Domain/V-Eval-Identity_Service.Domain.csproj"
+    },
+    "V-Eval-Identity_Service.Infrastructure/1.0.0": {
+      "type": "project",
+      "path": "../V-Eval-Identity_Service.Infrastructure/V-Eval-Identity_Service.Infrastructure.csproj",
+      "msbuildProject": "../V-Eval-Identity_Service.Infrastructure/V-Eval-Identity_Service.Infrastructure.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net9.0": [
-      "Microsoft.AspNetCore.OpenApi >= 9.0.17"
+      "Microsoft.AspNetCore.OpenApi >= 9.0.17",
+      "V-Eval-Identity_Service.Application >= 1.0.0",
+      "V-Eval-Identity_Service.Infrastructure >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -107,7 +160,14 @@
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "e:\\CapStone\\All Services\\V-Eval-Identity_Service\\V-Eval-Identity_Service.Application\\V-Eval-Identity_Service.Application.csproj": {
+              "projectPath": "e:\\CapStone\\All Services\\V-Eval-Identity_Service\\V-Eval-Identity_Service.Application\\V-Eval-Identity_Service.Application.csproj"
+            },
+            "e:\\CapStone\\All Services\\V-Eval-Identity_Service\\V-Eval-Identity_Service.Infrastructure\\V-Eval-Identity_Service.Infrastructure.csproj": {
+              "projectPath": "e:\\CapStone\\All Services\\V-Eval-Identity_Service\\V-Eval-Identity_Service.Infrastructure\\V-Eval-Identity_Service.Infrastructure.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
