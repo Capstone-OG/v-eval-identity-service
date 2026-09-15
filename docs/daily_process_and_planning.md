@@ -4,6 +4,20 @@ Tài liệu này dùng để theo dõi tiến độ phát triển thực tế h�
 
 ---
 
+## 📅 Cập nhật ngày 15/09/2026
+
+### 🎯 Mục tiêu hiện tại (Milestone 2 - Docker Containerization)
+Tạo Dockerfile Multi-stage cho Identity Service (Cổng `:5001`) và kết nối vào `docker-compose.yml`.
+
+### 📋 Danh sách Task & Trạng thái
+
+| Tên Task | Trạng thái | Ghi chú |
+| :--- | :---: | :--- |
+| **Tạo `Dockerfile` Multi-stage** | 🟢 Hoàn thành | Build và publish .NET 9 API image trên cổng `5001`. |
+| **Tích hợp Docker Compose** | 🟢 Hoàn thành | Khai báo container `v_eval_identity_service` tham gia mạng `veval_network`. |
+
+---
+
 ## 📅 Cập nhật ngày 14/09/2026
 
 ### 🎯 Mục tiêu hiện tại (Milestone 1 - Security & Configuration)
@@ -16,12 +30,3 @@ Khởi tạo cấu hình mẫu Production (`appsettings.example.json`), ẩn cá
 | **Khởi Tạo `appsettings.example.json`** | 🟢 Hoàn thành | Tạo file mẫu chứa đầy đủ `ConnectionStrings` và `JwtSettings` với label mẫu. |
 | **Bảo Mật Git Security** | 🟢 Hoàn thành | Cập nhật `.gitignore` ẩn tất cả file `appsettings.json` chứa thông tin nhạy cảm. |
 | **Định Tuyến Gateway YARP** | 🟢 Hoàn thành | Định tuyến `/api/identity/{**catch-all}` tại Gateway V-Eval trỏ về cổng `:5001`. |
-
----
-
-## 📅 Kế hoạch Tiếp theo (Upcoming Roadmap)
-
-### 🎯 Milestone 2: Đăng ký, Đăng nhập & Sinh JWT Token
-- [ ] Minimal API / CQRS Controller cho `POST /api/identity/register` & `POST /api/identity/login`.
-- [ ] Phát hành JWT Bearer Token chứa `sub` (UserId), `role`, `email`.
-- [ ] Tích hợp Refresh Token và thu hồi Token (Token Revocation).
