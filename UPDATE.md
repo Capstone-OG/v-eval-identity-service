@@ -1,6 +1,10 @@
 # Nhật Ký Cập Nhật (Update Log) - Identity Service
 
-## [18/09/2026] - Triển Khai Toàn Diện Authentication & User Profile (Clean Architecture & Multi-Schema PostgreSQL) & Script Push Độc Lập
+## [18/09/2026] - Triển Khai Toàn Diện Authentication & User Profile, Chuẩn Hóa Bộ Docs & Script Push Độc Lập
+- **Chuẩn Hóa Bộ Tài Liệu Service (`docs/`)**:
+  - Đổi tên `docs/daily_check_log.md` -> [`docs/daily.md`](file:///e:/CapStone/All%20Services/V-Eval-Identity_Service/docs/daily.md).
+  - Đổi tên `docs/daily_process_and_planning.md` -> [`docs/process.md`](file:///e:/CapStone/All%20Services/V-Eval-Identity_Service/docs/process.md).
+  - Đổi tên `docs/nghiem_thu_va_thau_hieu_kien_truc.md` -> [`docs/architecture_acceptance.md`](file:///e:/CapStone/All%20Services/V-Eval-Identity_Service/docs/architecture_acceptance.md).
 - **Phát Hành Công Cụ Push Độc Lập (`Scripts/push.bat`)**:
   - Khởi tạo script [`Scripts/push.bat`](file:///e:/CapStone/All%20Services/V-Eval-Identity_Service/Scripts/push.bat) hỗ trợ Push trên nhánh hiện tại, chọn nhánh đã có qua Menu đánh số, hoặc tạo nhánh mới tự động.
   - Tích hợp tự động kiểm tra đồng bộ lịch sử Git với Remote, tự động pull code khi bi cham (behind) và đưa ra **Cảnh báo Đỏ (Red Warning)** ngắt quy trình khi bị xung đột lịch sử (Conflict/Diverged).
