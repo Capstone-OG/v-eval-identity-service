@@ -1,6 +1,9 @@
 # Nhật Ký Cập Nhật (Update Log) - Identity Service
 
-## [18/09/2026] - Triển Khai Toàn Diện Authentication & User Profile (Clean Architecture & Multi-Schema PostgreSQL)
+## [18/09/2026] - Triển Khai Toàn Diện Authentication & User Profile (Clean Architecture & Multi-Schema PostgreSQL) & Script Push Độc Lập
+- **Phát Hành Công Cụ Push Độc Lập (`Scripts/push.bat`)**:
+  - Khởi tạo script [`Scripts/push.bat`](file:///e:/CapStone/All%20Services/V-Eval-Identity_Service/Scripts/push.bat) hỗ trợ Push trên nhánh hiện tại, chọn nhánh đã có qua Menu đánh số, hoặc tạo nhánh mới tự động.
+  - Tích hợp tự động kiểm tra đồng bộ lịch sử Git với Remote, tự động pull code khi bi cham (behind) và đưa ra **Cảnh báo Đỏ (Red Warning)** ngắt quy trình khi bị xung đột lịch sử (Conflict/Diverged).
 - **Kiến Trúc Clean Architecture 4 Tầng & CQRS (MediatR)**:
   - Tách biệt rõ ràng 4 tầng: `Domain`, `Application`, `Infrastructure`, `API`.
   - Triển khai CQRS thông qua MediatR, kết hợp `ValidationBehavior` Pipeline và FluentValidation tự động kiểm tra định dạng email, mật khẩu phức tạp, số điện thoại Việt Nam.
