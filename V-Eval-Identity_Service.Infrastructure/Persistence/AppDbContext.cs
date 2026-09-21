@@ -16,9 +16,16 @@ public class AppDbContext : DbContext
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<OtpVerification> OtpVerifications => Set<OtpVerification>();
+    public DbSet<Campus> Campuses => Set<Campus>();
 
     // Profile Entities
     public DbSet<Student> Students => Set<Student>();
+    public DbSet<Parent> Parents => Set<Parent>();
+    public DbSet<ParentStudentRelation> ParentStudentRelations => Set<ParentStudentRelation>();
+    public DbSet<Teacher> Teachers => Set<Teacher>();
+    public DbSet<AcademicManager> AcademicManagers => Set<AcademicManager>();
+    public DbSet<AcademicDirector> AcademicDirectors => Set<AcademicDirector>();
+    public DbSet<Administrator> Administrators => Set<Administrator>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

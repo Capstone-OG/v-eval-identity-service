@@ -5,6 +5,59 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistence.Configurations;
 
+public class CampusConfiguration : IEntityTypeConfiguration<Campus>
+{
+    public void Configure(EntityTypeBuilder<Campus> builder)
+    {
+        builder.ToTable("campuses", "iam");
+        builder.HasKey(c => c.CampusId);
+        builder.Property(c => c.CampusId).HasColumnName("campus_id");
+        builder.Property(c => c.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
+        builder.HasIndex(c => c.Code).IsUnique();
+        builder.Property(c => c.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
+        builder.Property(c => c.Address).HasColumnName("address").HasMaxLength(255).IsRequired();
+        builder.Property(c => c.Phone).HasColumnName("phone").HasMaxLength(20).IsRequired();
+        builder.Property(c => c.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+        builder.Property(c => c.CreatedAt).HasColumnName("created_at");
+
+        // Seed dữ liệu cơ sở mẫu phục vụ UC 10 & UC 40
+        builder.HasData(
+            new Campus
+            {
+                CampusId = Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                Code = "CS_THU_DUC",
+                Name = "Cơ sở 1 - Khu đô thị ĐHQG-HCM, TP. Thủ Đức",
+                Address = "Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP.HCM",
+                Phone = "02837242160",
+                IsActive = true,
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            },
+            new Campus
+            {
+                CampusId = Guid.Parse("4ba85f64-5717-4562-b3fc-2c963f66afa7"),
+                Code = "CS_QUAN_10",
+                Name = "Cơ sở 2 - Quận 10, TP.HCM",
+                Address = "268 Lý Thường Kiệt, Phường 14, Quận 10, TP.HCM",
+                Phone = "02838651670",
+                IsActive = true,
+                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            }
+        );
+    }
+}
+
+public class RoleConfiguration : IEntityTypeConfiguration<Role>
+{
+    public void Configure(EntityTypeBuilder<Role> builder)
+    {
+        builder.ToTable("roles", "iam");
+        builder.HasKey(r => r.RoleId);
+        builder.Property(r => r.RoleId).HasColumnName("role_id");
+        builder.Property(r => r.RoleName).HasColumnName("role_name").HasMaxLength(50).IsRequired();
+        builder.HasIndex(r => r.RoleName).IsUnique();
+    }
+}
+
 public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
@@ -21,18 +74,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.AvatarUrl).HasColumnName("avatar_url");
         builder.Property(u => u.IsActive).HasColumnName("is_active").HasDefaultValue(false);
         builder.Property(u => u.CreatedAt).HasColumnName("created_at");
-    }
-}
-
-public class RoleConfiguration : IEntityTypeConfiguration<Role>
-{
-    public void Configure(EntityTypeBuilder<Role> builder)
-    {
-        builder.ToTable("roles", "iam");
-        builder.HasKey(r => r.RoleId);
-        builder.Property(r => r.RoleId).HasColumnName("role_id");
-        builder.HasIndex(r => r.RoleName).IsUnique();
-        builder.Property(r => r.RoleName).HasColumnName("role_name").HasMaxLength(50).IsRequired();
     }
 }
 
@@ -109,6 +150,130 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.HasOne<User>()
             .WithOne()
             .HasForeignKey<Student>(s => s.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Quan hệ với iam.campuses
+        builder.HasOne<Campus>()
+            .WithMany()
+            .HasForeignKey(s => s.CampusId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
+}
+
+public class ParentConfiguration : IEntityTypeConfiguration<Parent>
+{
+    public void Configure(EntityTypeBuilder<Parent> builder)
+    {
+        builder.ToTable("parents", "profile");
+        builder.HasKey(p => p.ParentId);
+        builder.Property(p => p.ParentId).HasColumnName("parent_id");
+        builder.Property(p => p.PhoneWork).HasColumnName("phone_work").HasMaxLength(20);
+        builder.Property(p => p.CreatedAt).HasColumnName("created_at");
+
+        builder.HasOne<User>()
+            .WithOne()
+            .HasForeignKey<Parent>(p => p.ParentId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class ParentStudentRelationConfiguration : IEntityTypeConfiguration<ParentStudentRelation>
+{
+    public void Configure(EntityTypeBuilder<ParentStudentRelation> builder)
+    {
+        builder.ToTable("parent_student_relations", "profile");
+        builder.HasKey(r => r.RelationId);
+        builder.Property(r => r.RelationId).HasColumnName("relation_id");
+        builder.Property(r => r.ParentId).HasColumnName("parent_id");
+        builder.Property(r => r.StudentId).HasColumnName("student_id");
+        builder.Property(r => r.CreatedAt).HasColumnName("created_at");
+
+        builder.HasOne(r => r.Parent)
+            .WithMany(p => p.StudentRelations)
+            .HasForeignKey(r => r.ParentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(r => r.Student)
+            .WithMany()
+            .HasForeignKey(r => r.StudentId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
+{
+    public void Configure(EntityTypeBuilder<Teacher> builder)
+    {
+        builder.ToTable("teachers", "profile");
+        builder.HasKey(t => t.TeacherId);
+        builder.Property(t => t.TeacherId).HasColumnName("teacher_id");
+        builder.Property(t => t.CampusId).HasColumnName("campus_id");
+        builder.Property(t => t.Specialty).HasColumnName("specialty").HasMaxLength(150);
+        builder.Property(t => t.Bio).HasColumnName("bio");
+        builder.Property(t => t.CreatedAt).HasColumnName("created_at");
+
+        builder.HasOne<User>()
+            .WithOne()
+            .HasForeignKey<Teacher>(t => t.TeacherId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<Campus>()
+            .WithMany()
+            .HasForeignKey(t => t.CampusId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class AcademicManagerConfiguration : IEntityTypeConfiguration<AcademicManager>
+{
+    public void Configure(EntityTypeBuilder<AcademicManager> builder)
+    {
+        builder.ToTable("academic_managers", "profile");
+        builder.HasKey(m => m.ManagerId);
+        builder.Property(m => m.ManagerId).HasColumnName("manager_id");
+        builder.Property(m => m.CampusId).HasColumnName("campus_id");
+        builder.Property(m => m.CreatedAt).HasColumnName("created_at");
+
+        builder.HasOne<User>()
+            .WithOne()
+            .HasForeignKey<AcademicManager>(m => m.ManagerId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<Campus>()
+            .WithMany()
+            .HasForeignKey(m => m.CampusId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class AcademicDirectorConfiguration : IEntityTypeConfiguration<AcademicDirector>
+{
+    public void Configure(EntityTypeBuilder<AcademicDirector> builder)
+    {
+        builder.ToTable("academic_directors", "profile");
+        builder.HasKey(d => d.DirectorId);
+        builder.Property(d => d.DirectorId).HasColumnName("director_id");
+        builder.Property(d => d.CreatedAt).HasColumnName("created_at");
+
+        builder.HasOne<User>()
+            .WithOne()
+            .HasForeignKey<AcademicDirector>(d => d.DirectorId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class AdministratorConfiguration : IEntityTypeConfiguration<Administrator>
+{
+    public void Configure(EntityTypeBuilder<Administrator> builder)
+    {
+        builder.ToTable("administrators", "profile");
+        builder.HasKey(a => a.AdminId);
+        builder.Property(a => a.AdminId).HasColumnName("admin_id");
+        builder.Property(a => a.CreatedAt).HasColumnName("created_at");
+
+        builder.HasOne<User>()
+            .WithOne()
+            .HasForeignKey<Administrator>(a => a.AdminId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

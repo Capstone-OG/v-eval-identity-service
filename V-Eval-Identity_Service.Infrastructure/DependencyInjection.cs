@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IOtpRepository, OtpRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ICampusRepository, CampusRepository>();
 
         // 3. Application Services
         services.AddScoped<IPasswordHasher, PasswordHasher>();

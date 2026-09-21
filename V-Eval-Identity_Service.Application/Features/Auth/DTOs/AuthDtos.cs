@@ -22,3 +22,10 @@ public record RegisterResponseDto(
     string Message,
     string? OtpCode = null
 );
+
+public record ForgotPasswordResponseDto(
+    string Email,
+    string Message,
+    string? OtpCode = null
+);
+

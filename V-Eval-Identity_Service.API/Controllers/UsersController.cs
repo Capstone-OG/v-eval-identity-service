@@ -9,7 +9,7 @@ using V_Eval_Identity_Service.API.Controllers.Base;
 namespace V_Eval_Identity_Service.API.Controllers;
 
 [Authorize]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class UsersController : ApiControllerBase
 {
     /// <summary>

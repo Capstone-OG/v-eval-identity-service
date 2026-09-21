@@ -11,6 +11,13 @@ using V_Eval_Identity_Service.API.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Cấu hình Kestrel: Cổng 5155 cho REST/Swagger (HTTP/1), Cổng 5156 cho gRPC Server (HTTP/2)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenLocalhost(5155, lo => lo.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
+    options.ListenLocalhost(5156, lo => lo.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+});
+
 // 1. Đăng ký Application & Infrastructure layers
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -125,6 +132,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGrpcService<V_Eval_Identity_Service.API.Services.IdentityGrpcService>();
 
 // 9. Database Auto-Migration & Seed Data
 try

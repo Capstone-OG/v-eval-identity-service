@@ -17,4 +17,16 @@ public class RefreshTokenRepository : GenericRepository<RefreshToken>, IRefreshT
             .Include(r => r.User)
             .FirstOrDefaultAsync(r => r.Token == token, cancellationToken);
     }
+
+    public async Task RevokeAllByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var tokens = await _dbSet
+            .Where(r => r.UserId == userId && !r.IsRevoked)
+            .ToListAsync(cancellationToken);
+
+        foreach (var token in tokens)
+        {
+            token.IsRevoked = true;
+        }
+    }
 }

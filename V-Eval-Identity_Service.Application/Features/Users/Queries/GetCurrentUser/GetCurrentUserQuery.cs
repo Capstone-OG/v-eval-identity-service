@@ -12,16 +12,13 @@ public class GetCurrentUserHandler : IRequestHandler<GetCurrentUserQuery, Result
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IUserRepository _userRepository;
-    private readonly IStudentRepository _studentRepository;
 
     public GetCurrentUserHandler(
         ICurrentUserService currentUserService,
-        IUserRepository userRepository,
-        IStudentRepository studentRepository)
+        IUserRepository userRepository)
     {
         _currentUserService = currentUserService;
         _userRepository = userRepository;
-        _studentRepository = studentRepository;
     }
 
     public async Task<Result<UserProfileDto>> Handle(
@@ -47,20 +44,6 @@ public class GetCurrentUserHandler : IRequestHandler<GetCurrentUserQuery, Result
             .Select(ur => ur.Role.RoleName)
             .ToList();
 
-        StudentProfileDto? studentProfileDto = null;
-        var student = await _studentRepository.GetByIdAsync(user.UserId, cancellationToken);
-        if (student != null)
-        {
-            studentProfileDto = new StudentProfileDto(
-                student.StudentId,
-                student.CampusId,
-                student.TargetScore,
-                student.ExamDate,
-                student.StudyHoursDay,
-                student.SchoolName
-            );
-        }
-
         var profile = new UserProfileDto(
             user.UserId,
             user.Email,
@@ -69,8 +52,7 @@ public class GetCurrentUserHandler : IRequestHandler<GetCurrentUserQuery, Result
             user.AvatarUrl,
             user.IsActive,
             user.CreatedAt,
-            roles,
-            studentProfileDto
+            roles
         );
 
         return Result<UserProfileDto>.Success(profile);

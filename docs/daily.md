@@ -1,5 +1,43 @@
 # NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
 
+## [20/09/2026] - Triển Khai Thực Thể Campus, 6 Actor Profiles, API Chọn Cơ Sở & Server gRPC Identity
+- **Hoàn Thiện Thực Thể IAM & Hồ Sơ 6 Actor Profile (`Domain Layer`)**:
+  - Thực thể IAM: [`Campus.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/Campus.cs) (`campus_id`, `code`, `name`, `address`, `phone`, `is_active`, `created_at`).
+  - Thực thể Profile: [`Parent.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Profiles/Parent.cs), [`ParentStudentRelation.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Profiles/ParentStudentRelation.cs), [`Teacher.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Profiles/Teacher.cs), [`AcademicManager.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Profiles/AcademicManager.cs), [`AcademicDirector.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Profiles/AcademicDirector.cs), [`Administrator.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Profiles/Administrator.cs).
+- **Cấu Hình EF Core Multi-Schema & Seed Data (`Infrastructure Layer`)**:
+  - [`AppDbContext.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Infrastructure/Persistence/AppDbContext.cs): Đăng ký toàn bộ `DbSet` cho `Campuses` và 6 Actor profiles.
+  - [`AuthConfigurations.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Infrastructure/Persistence/Configurations/AuthConfigurations.cs): Định nghĩa Fluent API mapping chuẩn xác vào schema `iam` và `profile`, quan hệ 1-1 với `iam.users` (Cascade Delete), quan hệ `campuses`, và seed dữ liệu cho 6 vai trò hệ thống cùng 2 cơ sở mẫu (CS Thủ Đức, CS Quận 10).
+  - Triển khai [`ICampusRepository.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Application/Common/Interfaces/Repositories/ICampusRepository.cs) và [`CampusRepository.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/CampusRepository.cs) vào DI.
+- **Nâng Cấp Nghiệp Vụ Hồ Sơ & Tách Biệt Rạch Ròi Hồ Sơ Chung / Actor Profile (`Application & API Layers`)**:
+  - [`CampusesController.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/Controllers/CampusesController.cs): Cung cấp endpoint `GET /api/v1/campuses` (phục vụ UC 10 & UC 40).
+  - [`UsersController.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/Controllers/UsersController.cs): Chuyên biệt cho thông tin tài khoản dùng chung (IAM Account): `GET /api/v1/users/me`, `PUT /api/v1/users/me/profile`, `POST /api/v1/users/me/change-password`. DTO `UserProfileDto` loại bỏ hoàn toàn các trường gắn riêng với học sinh.
+  - [`StudentsController.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/Controllers/StudentsController.cs): Chuyên biệt cho Actor Học sinh với `GET /api/v1/students/me/profile` và `PUT /api/v1/students/me/profile` (`TargetScore` chuẩn ĐGNL ĐHQG-HCM V-ACT 0-1200, `CampusId`, ngày thi...).
+- **Triển Khai Liên Dịch Vụ gRPC (`IdentityGrpcService`)**:
+  - Hợp đồng [`identity.proto`](file:///d:/Capstone/grpc/identity.proto): Định nghĩa 2 RPC `ValidateUserPermission` và `GetStudentProfileSummary`.
+  - Hiện thực [`IdentityGrpcService.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs) kế thừa `IdentityGrpc.IdentityGrpcBase`.
+  - Đăng ký `app.MapGrpcService<IdentityGrpcService>()` trong [`Program.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/Program.cs).
+- **Kiểm Thử Biên Dịch & Swagger**:
+  - `dotnet build "d:\Capstone\All Services\V-Eval-Identity_Service\V-Eval-Identity_Service.sln"`: **Build succeeded (0 Error(s), 0 Warning(s))**.
+  - Swagger UI tại `http://localhost:5155`: Phân nhóm rõ ràng `Users`, `Students`, `Campuses`, `Auth`.
+
+## [18/09/2026] - Bổ Sung Trọn Bộ API Quên Mật Khẩu (OTP), Đặt Lại Mật Khẩu & Đăng Xuất (Logout)
+- **Triển Khai Tính Năng Quên & Đặt Lại Mật Khẩu (Forgot / Reset Password Flow)**:
+  - Tầng Domain & Common Interfaces: Cập nhật [`IRefreshTokenRepository.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Application/Common/Interfaces/Repositories/IRefreshTokenRepository.cs) bổ sung phương thức `RevokeAllByUserIdAsync(Guid userId, CancellationToken ct)`.
+  - Tầng Infrastructure: Hiện thực phương thức `RevokeAllByUserIdAsync` trong [`RefreshTokenRepository.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/RefreshTokenRepository.cs), thu hồi toàn bộ token còn hiệu lực của người dùng khi mật khẩu được reset.
+  - Tầng Application (CQRS Commands, Handlers, Validators & DTOs):
+    + [`AuthDtos.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Application/Features/Auth/DTOs/AuthDtos.cs): Thêm record `ForgotPasswordResponseDto(string Email, string Message, string? OtpCode = null)`.
+    + **UC 05 (Quên Mật Khẩu)**: [`ForgotPasswordCommand.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Application/Features/Auth/Commands/ForgotPassword/ForgotPasswordCommand.cs) kiểm tra tài khoản hoạt động, sinh mã OTP 6 số lưu vào `iam.otp_verifications` với `Type = "RESET_PASSWORD"`, thời hạn 10 phút.
+    + **UC 06 (Đặt Lại Mật Khẩu)**: [`ResetPasswordCommand.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Application/Features/Auth/Commands/ResetPassword/ResetPasswordCommand.cs) xác thực OTP `RESET_PASSWORD` chưa sử dụng, băm mật khẩu mới bằng BCrypt, đánh dấu OTP đã dùng (`is_used = true`), đồng thời kích hoạt `RevokeAllByUserIdAsync` hủy bỏ mọi phiên đăng nhập cũ trên tất cả thiết bị.
+- **Triển Khai Tính Năng Đăng Xuất (Logout Flow)**:
+  + **UC 07 (Đăng Xuất)**: [`LogoutCommand.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Application/Features/Auth/Commands/Logout/LogoutCommand.cs) nhận `RefreshToken`, tìm trong `iam.refresh_tokens` và đánh dấu `IsRevoked = true` nhằm vô hiệu hóa khả năng cấp mới Access Token của phiên làm việc đó.
+- **Tầng API Endpoints ([`AuthController.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/Controllers/AuthController.cs))**:
+  + Bổ sung 3 endpoints công khai:
+    - `POST /api/Auth/forgot-password`: Tiếp nhận email, phát hành OTP.
+    - `POST /api/Auth/reset-password`: Đổi mật khẩu mới kèm OTP.
+    - `POST /api/Auth/logout`: Đăng xuất, vô hiệu hóa Refresh Token.
+- **Kiểm Thử Vận Hành & Build**:
+  - Chạy biên dịch toàn bộ Solution `dotnet build "d:\Capstone\All Services\V-Eval-Identity_Service"` đạt **0 Error(s), 0 Warning(s)**.
+
 ## [18/09/2026] - Triển Khai Toàn Diện Clean Architecture, CQRS, Result Pattern & Multi-Schema PostgreSQL (iam & profile)
 - **Thiết Kế & Triển Khai Domain Layer (`V-Eval-Identity_Service.Domain`)**:
   - Khởi tạo các thực thể thuộc schema `iam`: [`User.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/User.cs), [`Role.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/Role.cs), [`UserRole.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/UserRole.cs), [`RefreshToken.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/RefreshToken.cs), [`OtpVerification.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/OtpVerification.cs).
