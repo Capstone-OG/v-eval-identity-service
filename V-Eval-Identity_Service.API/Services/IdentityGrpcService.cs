@@ -62,10 +62,18 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             return new GetStudentSummaryResponse { Exists = false };
         }
 
+        string campusName = string.Empty;
+        if (student.CampusId.HasValue)
+        {
+            var campus = await _context.Campuses.FirstOrDefaultAsync(c => c.CampusId == student.CampusId.Value);
+            campusName = campus?.Name ?? string.Empty;
+        }
+
         return new GetStudentSummaryResponse
         {
             StudentId = student.StudentId.ToString(),
             CampusId = student.CampusId?.ToString() ?? string.Empty,
+            CampusName = campusName,
             TargetScore = student.TargetScore ?? 0,
             ExamDate = student.ExamDate?.ToString("yyyy-MM-dd") ?? string.Empty,
             StudyHoursDay = student.StudyHoursDay ?? 0,

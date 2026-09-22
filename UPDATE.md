@@ -1,5 +1,11 @@
 # Nhật Ký Cập Nhật (Update Log) - Identity Service
 
+## [22/09/2026] - Nâng Cấp gRPC GetStudentProfileSummary Bổ Sung Tên Cơ Sở (CampusName)
+- **Nâng Cấp Hợp Đồng `identity.proto` & Server `IdentityGrpcService`**:
+  - Bổ sung trường `campus_name` vào message `GetStudentSummaryResponse`.
+  - Truy vấn tên cơ sở đào tạo từ bảng `iam.campuses` và trả về trực tiếp cho `Practice_Service` phục vụ việc hiển thị tên lớp học thân thiện.
+- **Kiểm Thử**: Biên dịch Solution sạch 0 Error, 0 Warning. Khởi chạy ổn định tại port 5155 (REST) và 5156 (gRPC).
+
 ## [20/09/2026] - Hoàn Thiện Thực Thể Campus, 6 Actor Profiles, API Cơ Sở & Server gRPC Identity
 - **UC 10 & UC 40: Quản Lý & Lựa Chọn Cơ Sở Đào Tạo (Campus)**:
   - Bổ sung thực thể [`Campus.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/Campus.cs) vào schema `iam.campuses`.

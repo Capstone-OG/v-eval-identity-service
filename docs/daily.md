@@ -1,5 +1,13 @@
 # NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
 
+## [22/09/2026] - Bổ Sung CampusName Vào gRPC GetStudentProfileSummary
+- **Cập Nhật `identity.proto` & Server `IdentityGrpcService`**:
+  - Bổ sung trường `campus_name` vào message `GetStudentSummaryResponse`.
+  - Truy vấn tên cơ sở đào tạo từ bảng `iam.campuses` và trả về cho `Practice_Service`.
+- **Kiểm Thử**: Biên dịch Solution sạch 100% (**0 Error, 0 Warning**), khởi chạy dịch vụ cổng 5155/5156.
+
+---
+
 ## [20/09/2026] - Triển Khai Thực Thể Campus, 6 Actor Profiles, API Chọn Cơ Sở & Server gRPC Identity
 - **Hoàn Thiện Thực Thể IAM & Hồ Sơ 6 Actor Profile (`Domain Layer`)**:
   - Thực thể IAM: [`Campus.cs`](file:///d:/Capstone/All%20Services/V-Eval-Identity_Service/V-Eval-Identity_Service.Domain/Entities/Iam/Campus.cs) (`campus_id`, `code`, `name`, `address`, `phone`, `is_active`, `created_at`).
