@@ -9,7 +9,7 @@ public class CampusConfiguration : IEntityTypeConfiguration<Campus>
 {
     public void Configure(EntityTypeBuilder<Campus> builder)
     {
-        builder.ToTable("campuses", "iam");
+        builder.ToTable("Campuses", "v_eval_identity");
         builder.HasKey(c => c.CampusId);
         builder.Property(c => c.CampusId).HasColumnName("campus_id");
         builder.Property(c => c.Code).HasColumnName("code").HasMaxLength(50).IsRequired();
@@ -50,7 +50,7 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 {
     public void Configure(EntityTypeBuilder<Role> builder)
     {
-        builder.ToTable("roles", "iam");
+        builder.ToTable("Roles", "v_eval_identity");
         builder.HasKey(r => r.RoleId);
         builder.Property(r => r.RoleId).HasColumnName("role_id");
         builder.Property(r => r.RoleName).HasColumnName("role_name").HasMaxLength(50).IsRequired();
@@ -62,7 +62,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.ToTable("users", "iam");
+        builder.ToTable("Users", "v_eval_identity");
         builder.HasKey(u => u.UserId);
         builder.Property(u => u.UserId).HasColumnName("user_id");
         
@@ -81,7 +81,7 @@ public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
 {
     public void Configure(EntityTypeBuilder<UserRole> builder)
     {
-        builder.ToTable("user_roles", "iam");
+        builder.ToTable("UserRoles", "v_eval_identity");
         builder.HasKey(ur => new { ur.UserId, ur.RoleId });
         builder.Property(ur => ur.UserId).HasColumnName("user_id");
         builder.Property(ur => ur.RoleId).HasColumnName("role_id");
@@ -100,7 +100,7 @@ public class RefreshTokenConfiguration : IEntityTypeConfiguration<RefreshToken>
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
-        builder.ToTable("refresh_tokens", "iam");
+        builder.ToTable("RefreshTokens", "v_eval_identity");
         builder.HasKey(rt => rt.RefreshTokenId);
         builder.Property(rt => rt.RefreshTokenId).HasColumnName("refresh_token_id");
         builder.Property(rt => rt.UserId).HasColumnName("user_id");
@@ -120,7 +120,7 @@ public class OtpVerificationConfiguration : IEntityTypeConfiguration<OtpVerifica
 {
     public void Configure(EntityTypeBuilder<OtpVerification> builder)
     {
-        builder.ToTable("otp_verifications", "iam");
+        builder.ToTable("OtpVerifications", "v_eval_identity");
         builder.HasKey(o => o.Id);
         builder.Property(o => o.Id).HasColumnName("id");
         builder.Property(o => o.Email).HasColumnName("email").HasMaxLength(150).IsRequired();
@@ -136,7 +136,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
 {
     public void Configure(EntityTypeBuilder<Student> builder)
     {
-        builder.ToTable("students", "profile");
+        builder.ToTable("Students", "v_eval_identity");
         builder.HasKey(s => s.StudentId);
         builder.Property(s => s.StudentId).HasColumnName("student_id");
         builder.Property(s => s.CampusId).HasColumnName("campus_id");
@@ -164,7 +164,7 @@ public class ParentConfiguration : IEntityTypeConfiguration<Parent>
 {
     public void Configure(EntityTypeBuilder<Parent> builder)
     {
-        builder.ToTable("parents", "profile");
+        builder.ToTable("Parents", "v_eval_identity");
         builder.HasKey(p => p.ParentId);
         builder.Property(p => p.ParentId).HasColumnName("parent_id");
         builder.Property(p => p.PhoneWork).HasColumnName("phone_work").HasMaxLength(20);
@@ -181,7 +181,7 @@ public class ParentStudentRelationConfiguration : IEntityTypeConfiguration<Paren
 {
     public void Configure(EntityTypeBuilder<ParentStudentRelation> builder)
     {
-        builder.ToTable("parent_student_relations", "profile");
+        builder.ToTable("ParentStudentRelations", "v_eval_identity");
         builder.HasKey(r => r.RelationId);
         builder.Property(r => r.RelationId).HasColumnName("relation_id");
         builder.Property(r => r.ParentId).HasColumnName("parent_id");
@@ -204,7 +204,7 @@ public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
 {
     public void Configure(EntityTypeBuilder<Teacher> builder)
     {
-        builder.ToTable("teachers", "profile");
+        builder.ToTable("Teachers", "v_eval_identity");
         builder.HasKey(t => t.TeacherId);
         builder.Property(t => t.TeacherId).HasColumnName("teacher_id");
         builder.Property(t => t.CampusId).HasColumnName("campus_id");
@@ -228,7 +228,7 @@ public class AcademicManagerConfiguration : IEntityTypeConfiguration<AcademicMan
 {
     public void Configure(EntityTypeBuilder<AcademicManager> builder)
     {
-        builder.ToTable("academic_managers", "profile");
+        builder.ToTable("AcademicManagers", "v_eval_identity");
         builder.HasKey(m => m.ManagerId);
         builder.Property(m => m.ManagerId).HasColumnName("manager_id");
         builder.Property(m => m.CampusId).HasColumnName("campus_id");
@@ -250,7 +250,7 @@ public class AcademicDirectorConfiguration : IEntityTypeConfiguration<AcademicDi
 {
     public void Configure(EntityTypeBuilder<AcademicDirector> builder)
     {
-        builder.ToTable("academic_directors", "profile");
+        builder.ToTable("AcademicDirectors", "v_eval_identity");
         builder.HasKey(d => d.DirectorId);
         builder.Property(d => d.DirectorId).HasColumnName("director_id");
         builder.Property(d => d.CreatedAt).HasColumnName("created_at");
@@ -266,7 +266,7 @@ public class AdministratorConfiguration : IEntityTypeConfiguration<Administrator
 {
     public void Configure(EntityTypeBuilder<Administrator> builder)
     {
-        builder.ToTable("administrators", "profile");
+        builder.ToTable("Administrators", "v_eval_identity");
         builder.HasKey(a => a.AdminId);
         builder.Property(a => a.AdminId).HasColumnName("admin_id");
         builder.Property(a => a.CreatedAt).HasColumnName("created_at");
