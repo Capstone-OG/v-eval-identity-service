@@ -57,4 +57,6 @@
 | 14 | **gRPC Service (IdentityGrpc)** | `API/Services/IdentityGrpcService.cs` | 🟢 Hoàn thành | 100% | Triển khai `ValidateUserPermission` & `GetStudentProfileSummary` |
 | 15 | **Kiểm thử E2E & Build Solution** | Test Execution Log | 🟢 Hoàn thành | 100% | `dotnet build` đạt 0 Error, 0 Warning |
 | 16 | **Script Push Độc Lập** | `Scripts/push.bat` | 🟢 Hoàn thành | 100% | Hỗ trợ 3 chế độ push kèm kiểm tra lịch sử |
-| 17 | **OAuth2 (Google/Facebook)** | `Features/Auth/Commands/OAuth/` | 🟡 Đang chờ | 0% | Sẽ phát triển ở giai đoạn sau |
+| 17 | **Cấp Phát Tài Khoản Trực Tiếp (IAM)** | `Features/Users/Commands/ProvisionUser/` | 🟢 Hoàn thành | 100% | `POST /api/v1/users/provision`: Cấp tài khoản trực tiếp 6 vai trò, kích hoạt ngay không OTP |
+| 18 | **Quản Lý & Khóa/Mở Tài Khoản** | `Features/Users/Queries/GetUsers/`, `ToggleUserStatus/` | 🟢 Hoàn thành | 100% | `GET /api/v1/users` (phân trang, lọc vai trò, cơ sở), `PATCH /api/v1/users/{id}/toggle-status` |
+| 19 | **OAuth2 (Google/Facebook)** | `Features/Auth/Commands/OAuth/` | 🟡 Đang chờ | 0% | Sẽ phát triển ở giai đoạn sau |
