@@ -60,3 +60,4 @@
 | 17 | **Cấp Phát Tài Khoản Trực Tiếp (IAM)** | `Features/Users/Commands/ProvisionUser/` | 🟢 Hoàn thành | 100% | `POST /api/v1/users/provision`: Cấp tài khoản trực tiếp 6 vai trò, kích hoạt ngay không OTP |
 | 18 | **Quản Lý & Khóa/Mở Tài Khoản** | `Features/Users/Queries/GetUsers/`, `ToggleUserStatus/` | 🟢 Hoàn thành | 100% | `GET /api/v1/users` (phân trang, lọc vai trò, cơ sở), `PATCH /api/v1/users/{id}/toggle-status` |
 | 19 | **OAuth2 (Google/Facebook)** | `Features/Auth/Commands/OAuth/` | 🟡 Đang chờ | 0% | Sẽ phát triển ở giai đoạn sau |
+| 20 | **Chuẩn Hóa Cấu Hình & Centralized Config** | `V-Eval-Identity_Service.API/appsettings.example.json` | 🟢 Hoàn thành | 100% | Khớp cấu trúc Jwt/Kestrel, hỗ trợ sync_config.bat từ System-Repo |
