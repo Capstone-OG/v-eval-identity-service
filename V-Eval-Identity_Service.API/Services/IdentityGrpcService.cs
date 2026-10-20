@@ -80,4 +80,101 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             Exists = true
         };
     }
+
+    public override async Task<GetParentStudentsResponse> GetParentStudents(
+        GetParentStudentsRequest request, ServerCallContext context)
+    {
+        var response = new GetParentStudentsResponse();
+        if (!Guid.TryParse(request.ParentId, out var parentGuid))
+        {
+            return response;
+        }
+
+        var relations = await _context.ParentStudentRelations
+            .Where(r => r.ParentId == parentGuid)
+            .ToListAsync();
+
+        if (!relations.Any())
+        {
+            return response;
+        }
+
+        var studentIds = relations.Select(r => r.StudentId).ToList();
+
+        var students = await _context.Students
+            .Where(s => studentIds.Contains(s.StudentId))
+            .ToListAsync();
+
+        var users = await _context.Users
+            .Where(u => studentIds.Contains(u.UserId))
+            .ToListAsync();
+
+        foreach (var rel in relations)
+        {
+            var user = users.FirstOrDefault(u => u.UserId == rel.StudentId);
+            var student = students.FirstOrDefault(s => s.StudentId == rel.StudentId);
+
+            response.Students.Add(new StudentSummaryItem
+            {
+                StudentId = rel.StudentId.ToString(),
+                Name = user?.FullName ?? "Học sinh",
+                Email = user?.Email ?? string.Empty,
+                CampusId = student?.CampusId?.ToString() ?? string.Empty
+            });
+        }
+
+        return response;
+    }
+
+    public override async Task<LinkParentResponse> LinkParentStudent(
+        LinkParentRequest request, ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.ParentId, out var parentGuid))
+        {
+            return new LinkParentResponse { Success = false, Message = "Invalid parent ID format" };
+        }
+
+        if (string.IsNullOrWhiteSpace(request.StudentEmail))
+        {
+            return new LinkParentResponse { Success = false, Message = "Student email cannot be empty" };
+        }
+
+        var normalizedEmail = request.StudentEmail.Trim().ToLowerInvariant();
+        var studentUser = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+
+        if (studentUser == null)
+        {
+            return new LinkParentResponse { Success = false, Message = $"Student with email '{request.StudentEmail}' not found" };
+        }
+
+        var parentProfile = await _context.Parents.FirstOrDefaultAsync(p => p.ParentId == parentGuid);
+        if (parentProfile == null)
+        {
+            parentProfile = new Domain.Entities.Profiles.Parent
+            {
+                ParentId = parentGuid
+            };
+            _context.Parents.Add(parentProfile);
+        }
+
+        var existingRelation = await _context.ParentStudentRelations
+            .FirstOrDefaultAsync(r => r.ParentId == parentGuid && r.StudentId == studentUser.UserId);
+
+        if (existingRelation != null)
+        {
+            return new LinkParentResponse { Success = true, Message = "Student already linked to parent" };
+        }
+
+        _context.ParentStudentRelations.Add(new Domain.Entities.Profiles.ParentStudentRelation
+        {
+            ParentId = parentGuid,
+            StudentId = studentUser.UserId,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+
+        return new LinkParentResponse { Success = true, Message = "Successfully linked parent and student" };
+    }
 }
