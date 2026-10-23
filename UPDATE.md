@@ -1,9 +1,9 @@
 # Nhật Ký Cập Nhật (Update Log) - Identity Service
 
-## [20/10/2026] - Triển Khai gRPC Endpoints Quan Hệ Phụ Huynh - Học Sinh (Parent-Student Relations) Phục Vụ Core Flow 5
+## [23/10/2026] - Đồng Bộ CSDL Định Danh, RBAC & Hồ Sơ 6 Actors Vào Master SQL.sql Và Capstone.drawio
 
-- **Triển Khai Giao Thức gRPC `GetParentStudents` & `LinkParentStudent` (`IdentityGrpcService.cs`)**:
-  - `GetParentStudents`: Nhận `parent_id`, truy vấn bảng `ParentStudentRelations`, nạp hồ sơ mở rộng từ `Students` và thông tin người dùng từ `Users` (Họ tên, Email, CampusId) để trả về cho phân hệ giám sát phụ huynh (Parent Companion Portal).
-  - `LinkParentStudent`: Nhận `parent_id` và `student_email`, xác minh sự tồn tại của học sinh, tự động khởi tạo profile phụ huynh nếu chưa có, và thiết lập quan hệ phụ huynh - học sinh vào bảng `ParentStudentRelations`.
-- **Kiểm Thử Biên Dịch**:
-  - `dotnet build` đạt 100% thành công (0 warning, 0 error).
+- **Đồng Bộ CSDL Phân Hệ Identity (`v_eval_identity`)**:
+  - Hợp nhất toàn bộ 13 bảng thực thể vào `docs/SQL/SQL.sql`: `Campuses`, `Roles`, `Users`, `UserRoles`, `RefreshTokens`, `OtpVerifications`, `Students`, `Parents`, `ParentStudentRelations`, `Teachers`, `AcademicManagers`, `AcademicDirectors`, `Administrators`.
+  - Chuẩn hóa đầy đủ các trường bảo mật phiên (`RefreshTokens`), mã xác thực (`OtpVerifications`), và kế thừa 1:1 Actor Profiles từ `Users`.
+- **Đồng Bộ ERD Trang 1 Trong `docs/SQL/Capstone.drawio`**:
+  - Phân bổ vào 2 package: `1. Định danh & RBAC` (6 bảng) và `2. Hồ sơ Actor` (7 bảng).
