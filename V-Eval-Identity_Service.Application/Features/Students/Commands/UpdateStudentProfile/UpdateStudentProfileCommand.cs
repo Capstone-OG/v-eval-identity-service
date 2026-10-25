@@ -68,12 +68,15 @@ public class UpdateStudentProfileHandler : IRequestHandler<UpdateStudentProfileC
             student = new Student
             {
                 StudentId = currentUserId.Value,
+                CampusId = request.CampusId ?? Guid.Empty,
                 CreatedAt = DateTime.UtcNow
             };
             await _studentRepository.AddAsync(student, cancellationToken);
         }
-
-        if (request.CampusId.HasValue) student.CampusId = request.CampusId;
+        else if (request.CampusId.HasValue)
+        {
+            student.CampusId = request.CampusId.Value;
+        }
         if (request.TargetScore.HasValue) student.TargetScore = request.TargetScore;
         if (request.ExamDate.HasValue) student.ExamDate = request.ExamDate;
         if (request.StudyHoursDay.HasValue) student.StudyHoursDay = request.StudyHoursDay;

@@ -139,7 +139,7 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.ToTable("Students", "v_eval_identity");
         builder.HasKey(s => s.StudentId);
         builder.Property(s => s.StudentId).HasColumnName("student_id");
-        builder.Property(s => s.CampusId).HasColumnName("campus_id");
+        builder.Property(s => s.CampusId).HasColumnName("campus_id").IsRequired();
         builder.Property(s => s.TargetScore).HasColumnName("target_score");
         builder.Property(s => s.ExamDate).HasColumnName("exam_date");
         builder.Property(s => s.StudyHoursDay).HasColumnName("study_hours_day");
@@ -152,11 +152,11 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
             .HasForeignKey<Student>(s => s.StudentId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Quan hệ với iam.campuses
+        // Quan hệ với iam.campuses (Học sinh bắt buộc thuộc 1 campus)
         builder.HasOne<Campus>()
             .WithMany()
             .HasForeignKey(s => s.CampusId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -253,12 +253,19 @@ public class AcademicDirectorConfiguration : IEntityTypeConfiguration<AcademicDi
         builder.ToTable("AcademicDirectors", "v_eval_identity");
         builder.HasKey(d => d.DirectorId);
         builder.Property(d => d.DirectorId).HasColumnName("director_id");
+        builder.Property(d => d.CampusId).HasColumnName("campus_id").IsRequired();
         builder.Property(d => d.CreatedAt).HasColumnName("created_at");
 
         builder.HasOne<User>()
             .WithOne()
             .HasForeignKey<AcademicDirector>(d => d.DirectorId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Quan hệ với iam.campuses (Giám đốc đào tạo trực thuộc campus)
+        builder.HasOne<Campus>()
+            .WithMany()
+            .HasForeignKey(d => d.CampusId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

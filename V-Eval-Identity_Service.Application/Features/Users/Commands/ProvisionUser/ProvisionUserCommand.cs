@@ -130,7 +130,7 @@ public class ProvisionUserHandler : IRequestHandler<ProvisionUserCommand, Result
         }
         else if (roleNameUpper == SystemRoles.AcademicDirector)
         {
-            await _userRepository.AddAcademicDirectorProfileAsync(user.UserId, cancellationToken);
+            await _userRepository.AddAcademicDirectorProfileAsync(user.UserId, campusGuid, cancellationToken);
         }
         else if (roleNameUpper == SystemRoles.Administrator)
         {
@@ -141,7 +141,7 @@ public class ProvisionUserHandler : IRequestHandler<ProvisionUserCommand, Result
             await _studentRepository.AddAsync(new Student
             {
                 StudentId = user.UserId,
-                CampusId = campus?.CampusId,
+                CampusId = campusGuid,
                 CreatedAt = DateTime.UtcNow
             }, cancellationToken);
         }

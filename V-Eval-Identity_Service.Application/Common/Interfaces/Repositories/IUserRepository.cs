@@ -26,7 +26,7 @@ public interface IUserRepository : IGenericRepository<User>
 
     Task AddTeacherProfileAsync(Guid teacherId, Guid campusId, string specialty, CancellationToken cancellationToken = default);
     Task AddAcademicManagerProfileAsync(Guid managerId, Guid campusId, CancellationToken cancellationToken = default);
-    Task AddAcademicDirectorProfileAsync(Guid directorId, CancellationToken cancellationToken = default);
+    Task AddAcademicDirectorProfileAsync(Guid directorId, Guid campusId, CancellationToken cancellationToken = default);
     Task AddAdministratorProfileAsync(Guid adminId, CancellationToken cancellationToken = default);
     Task AddParentProfileAsync(Guid parentId, string? phoneWork, CancellationToken cancellationToken = default);
 }
