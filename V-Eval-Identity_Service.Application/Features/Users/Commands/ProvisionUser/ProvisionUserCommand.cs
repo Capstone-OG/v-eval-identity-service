@@ -130,7 +130,7 @@ public class ProvisionUserHandler : IRequestHandler<ProvisionUserCommand, Result
         }
         else if (roleNameUpper == SystemRoles.AcademicDirector)
         {
-            await _userRepository.AddAcademicDirectorProfileAsync(user.UserId, campusGuid, cancellationToken);
+            await _userRepository.AddAcademicDirectorProfileAsync(user.UserId, cancellationToken);
         }
         else if (roleNameUpper == SystemRoles.Administrator)
         {

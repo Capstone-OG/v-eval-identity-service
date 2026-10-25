@@ -253,19 +253,12 @@ public class AcademicDirectorConfiguration : IEntityTypeConfiguration<AcademicDi
         builder.ToTable("AcademicDirectors", "v_eval_identity");
         builder.HasKey(d => d.DirectorId);
         builder.Property(d => d.DirectorId).HasColumnName("director_id");
-        builder.Property(d => d.CampusId).HasColumnName("campus_id").IsRequired();
         builder.Property(d => d.CreatedAt).HasColumnName("created_at");
 
         builder.HasOne<User>()
             .WithOne()
             .HasForeignKey<AcademicDirector>(d => d.DirectorId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Quan hệ với iam.campuses (Giám đốc đào tạo trực thuộc campus)
-        builder.HasOne<Campus>()
-            .WithMany()
-            .HasForeignKey(d => d.CampusId)
-            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

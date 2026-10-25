@@ -132,12 +132,11 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         }, cancellationToken);
     }
 
-    public async Task AddAcademicDirectorProfileAsync(Guid directorId, Guid campusId, CancellationToken cancellationToken = default)
+    public async Task AddAcademicDirectorProfileAsync(Guid directorId, CancellationToken cancellationToken = default)
     {
         await _context.AcademicDirectors.AddAsync(new AcademicDirector
         {
             DirectorId = directorId,
-            CampusId = campusId,
             CreatedAt = DateTime.UtcNow
         }, cancellationToken);
     }
