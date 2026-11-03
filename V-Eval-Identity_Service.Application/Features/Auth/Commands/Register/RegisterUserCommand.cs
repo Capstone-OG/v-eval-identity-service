@@ -17,6 +17,7 @@ public record RegisterUserCommand : IRequest<Result<RegisterResponseDto>>
     public string FullName { get; init; } = string.Empty;
     public string Phone { get; init; } = string.Empty;
     public string RoleName { get; init; } = SystemRoles.Student;
+    public Guid? CampusId { get; init; }
 }
 
 public class RegisterUserValidator : AbstractValidator<RegisterUserCommand>
@@ -124,15 +125,24 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
 
         await _userRepository.AddAsync(user, cancellationToken);
 
-        // 5. Nếu role là STUDENT, tự khởi tạo bản ghi trong profile.students
+        // 5. Khởi tạo profile theo Role (Student hoặc Parent)
         if (roleNameUpper == SystemRoles.Student)
         {
             var student = new Student
             {
                 StudentId = user.UserId,
+                CampusId = (request.CampusId.HasValue && 
+                    (request.CampusId.Value == Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6") || 
+                     request.CampusId.Value == Guid.Parse("4ba85f64-5717-4562-b3fc-2c963f66afa7")))
+                    ? request.CampusId.Value
+                    : Guid.Parse("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
                 CreatedAt = DateTime.UtcNow
             };
             await _studentRepository.AddAsync(student, cancellationToken);
+        }
+        else if (roleNameUpper == SystemRoles.Parent)
+        {
+            await _userRepository.AddParentProfileAsync(user.UserId, request.Phone, cancellationToken);
         }
 
         // 6. Sinh mã OTP và lưu vào iam.otp_verifications

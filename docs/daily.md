@@ -1,5 +1,17 @@
 # NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
 
+## [03/11/2026] - Nâng Cấp Luồng Đăng Ký Tài Khoản Liên Kết Cơ Sở (Campus) & Hỗ Trợ Phụ Huynh
+
+- **Cải Tiến Lệnh Đăng Ký Người Dùng (`RegisterUserCommand.cs`)**:
+  - Bổ sung trường `CampusId` vào `RegisterUserCommand` và tự động liên kết cơ sở khi tạo profile học sinh (`Student`).
+  - Thiết lập giá trị mặc định an toàn sang Cơ sở 1 - ĐHQG-HCM Thủ Đức khi request không truyền mã cơ sở, triệt tiêu lỗi ràng buộc toàn vẹn khóa ngoại `FK_Students_Campuses_campus_id`.
+  - Tự động sinh hồ sơ phụ huynh (`Parents`) khi tài khoản đăng ký với vai trò `PARENT`.
+- **Kiểm Thử Toàn Trình**:
+  - Dịch vụ lắng nghe tại cổng `5155` (HTTP) và `5156` (gRPC), liên thông mượt mà qua API Gateway `5212`.
+  - Kiểm thử thành công các API: `/api/v1/campuses` (HTTP 200), `/api/auth/register` (HTTP 200), `/api/auth/verify-account` (HTTP 200) và `/api/auth/login` (HTTP 200).
+
+---
+
 ## [02/11/2026] - Thiết Lập Kiến Trúc Test Nền Tảng Cho IDENTITY SERVICE
 
 - **Chuẩn Hóa Hạ Tầng Dự Án Kiểm Thử (V-Eval-Identity_Service.Tests)**:
