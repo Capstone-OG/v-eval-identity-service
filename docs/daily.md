@@ -1,4 +1,31 @@
-# NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
+﻿# NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
+
+## [04/11/2026] - Triển Khai Phân Hệ Brevo SMTP Email Service, Khóa API Thực Tế & Khắc Phục Khởi Chạy EF Core 9
+
+- **Kích Hoạt Tài Khoản Brevo SMTP Thực Tế**:
+  - Nhập khóa API và thông tin xác thực Brevo SMTP Relay (smtp-relay.brevo.com:587, STARTTLS) với tài khoản c17a0c001@smtp-brevo.com.
+  - Chuẩn hóa thông tin người gửi mang thương hiệu hệ thống: V_Eval System <veval.system@gmail.com>.
+  - Thực hiện kịch bản kiểm thử trực tiếp gửi email HTML chuẩn responsive qua máy chủ trung chuyển Brevo SMTP thành công 100%.
+- **Khắc Phục Cảnh Báo Khởi Động EF Core 9 (PendingModelChangesWarning)**:
+  - Bổ sung ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning)) tại DependencyInjection.cs, bảo đảm ứng dụng khởi động an toàn, tự động di chuyển CSDL và nạp dữ liệu mồi mà không bị ngắt quãng.
+
+- **Thiết Kế & Triển Khai Dịch Vụ Email SMTP (`BrevoSmtpEmailService.cs`)**:
+  - Tích hợp bộ thư viện công nghiệp `MailKit` & `MimeKit` 4.17.0 vào tầng `Infrastructure`.
+  - Khai báo giao diện trừu tượng `IEmailService` tại tầng `Application` phục vụ gửi mã OTP kích hoạt tài khoản đăng ký (UC 01) và khôi phục mật khẩu (UC 05).
+  - Hiện thực `BrevoSmtpEmailService` kết nối máy chủ chuyển tiếp Brevo SMTP Relay (`smtp-relay.brevo.com:587`, STARTTLS), hỗ trợ chế độ phòng vệ Fail-Safe ghi log an toàn.
+  - Thiết kế mẫu thư HTML chuyên nghiệp thương hiệu V-Eval Adaptive Learning Platform (xanh Navy/Indigo, mã OTP monospace to rõ, hạn 10 phút).
+- **Đấu Nối Nghiệp Vụ CQRS**:
+  - Tích hợp gọi email tự động trong `RegisterUserHandler.cs` (UC 01) và `ForgotPasswordHandler.cs` (UC 05).
+  - Bổ sung cấu hình `"Email"` trong `appsettings.json`.
+- **Kiểm Thử Đơn Vị**:
+  - Viết Unit Tests `RegisterUserCommandHandlerTests` xác thực gọi `IEmailService`, đạt **5/5 tests PASS 100%**.
+- **Bổ Sung API Xác Thực Mã OTP Quên Mật Khẩu (UC 05b - POST /api/auth/verify-reset-otp)**:
+  - Triển khai VerifyResetOtpCommand, VerifyResetOtpValidator và VerifyResetOtpHandler tại tầng Application.
+  - Kiểm tra tính hợp lệ và hạn dùng của mã OTP loại RESET_PASSWORD trong CSDL trước khi cho phép chuyển sang bước đổi mật khẩu mới, chặn đứng hoàn toàn việc nhập OTP sai mà vẫn được sang bước tiếp theo.
+  - Đăng ký endpoint POST /api/auth/verify-reset-otp tại AuthController.cs.
+  - Kiểm thử trực tiếp qua REST: Trả về HTTP 400 (Auth.InvalidOtp) khi OTP sai, trả về HTTP 200 khi OTP hợp lệ.
+
+---
 
 ## [03/11/2026] - Nâng Cấp Luồng Đăng Ký Tài Khoản Liên Kết Cơ Sở (Campus) & Hỗ Trợ Phụ Huynh
 

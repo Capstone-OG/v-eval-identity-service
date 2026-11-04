@@ -59,6 +59,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
     private readonly IOtpRepository _otpRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IOtpService _otpService;
+    private readonly IEmailService _emailService;
     private readonly IUnitOfWork _unitOfWork;
 
     public RegisterUserHandler(
@@ -68,6 +69,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
         IOtpRepository otpRepository,
         IPasswordHasher _passwordHasher,
         IOtpService _otpService,
+        IEmailService emailService,
         IUnitOfWork _unitOfWork)
     {
         _userRepository = userRepository;
@@ -76,6 +78,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
         _otpRepository = otpRepository;
         this._passwordHasher = _passwordHasher;
         this._otpService = _otpService;
+        _emailService = emailService;
         this._unitOfWork = _unitOfWork;
     }
 
@@ -160,6 +163,9 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
 
         // 7. Lưu tất cả thay đổi qua UnitOfWork
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // 8. Gửi email chứa mã OTP kích hoạt tài khoản qua Brevo SMTP
+        await _emailService.SendRegistrationOtpEmailAsync(user.Email, user.FullName, otpCode, cancellationToken);
 
         var responseDto = new RegisterResponseDto(
             user.UserId,

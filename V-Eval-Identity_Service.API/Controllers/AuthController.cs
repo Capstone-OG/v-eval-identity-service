@@ -1,9 +1,10 @@
-using Application.Features.Auth.Commands.ForgotPassword;
+﻿using Application.Features.Auth.Commands.ForgotPassword;
 using Application.Features.Auth.Commands.Login;
 using Application.Features.Auth.Commands.Logout;
 using Application.Features.Auth.Commands.RefreshToken;
 using Application.Features.Auth.Commands.Register;
 using Application.Features.Auth.Commands.ResetPassword;
+using Application.Features.Auth.Commands.VerifyResetOtp;
 using Application.Features.Auth.Commands.VerifyAccount;
 using Application.Features.Auth.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -73,6 +74,18 @@ public class AuthController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command)
+    {
+        var result = await Mediator.Send(command);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// UC 05b: Xác thực mã OTP đặt lại mật khẩu trước khi qua bước 3
+    /// </summary>
+    [HttpPost("verify-reset-otp")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyResetOtp([FromBody] VerifyResetOtpCommand command)
     {
         var result = await Mediator.Send(command);
         return HandleResult(result);

@@ -29,17 +29,20 @@ public class ForgotPasswordHandler : IRequestHandler<ForgotPasswordCommand, Resu
     private readonly IUserRepository _userRepository;
     private readonly IOtpRepository _otpRepository;
     private readonly IOtpService _otpService;
+    private readonly IEmailService _emailService;
     private readonly IUnitOfWork _unitOfWork;
 
     public ForgotPasswordHandler(
         IUserRepository userRepository,
         IOtpRepository otpRepository,
         IOtpService otpService,
+        IEmailService emailService,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
         _otpRepository = otpRepository;
         _otpService = otpService;
+        _emailService = emailService;
         _unitOfWork = unitOfWork;
     }
 
@@ -79,7 +82,10 @@ public class ForgotPasswordHandler : IRequestHandler<ForgotPasswordCommand, Resu
         await _otpRepository.AddAsync(otpVerification, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        // 4. Trả kết quả (kèm otpCode để thuận tiện test trên môi trường Dev)
+        // 4. Gửi email chứa mã OTP khôi phục mật khẩu qua Brevo SMTP
+        await _emailService.SendForgotPasswordOtpEmailAsync(user.Email, user.FullName, otpCode, cancellationToken);
+
+        // 5. Trả kết quả (kèm otpCode để thuận tiện test trên môi trường Dev)
         var responseDto = new ForgotPasswordResponseDto(
             user.Email,
             "Mã xác thực OTP đặt lại mật khẩu đã được gửi đến email của bạn.",

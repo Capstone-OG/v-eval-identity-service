@@ -119,3 +119,5 @@
 | **API Layer** | `ApiControllerBase.cs`, `AuthController.cs`, `UsersController.cs`, `CampusesController.cs`, `IdentityGrpcService.cs`, `GlobalExceptionHandlerMiddleware.cs`, `Program.cs` | **ĐẠT (100%)** |
 | **Protos Contract** | `identity.proto` (`VEval.Grpc.Identity`) | **ĐẠT (100%)** |
 | **Centralized Config** | `appsettings.example.json`, `Configs/V-Eval-Identity_Service/appsettings.json` | **ĐẠT (100%)** |
+| **Brevo SMTP Email Service** | `IEmailService.cs`, `BrevoSmtpEmailService.cs`, `MailKit 4.17.0` | **ĐẠT (100%)** |
+| **Verify Reset OTP (UC 05b)** | `VerifyResetOtpCommand.cs`, `AuthController.cs` (`POST /api/auth/verify-reset-otp`) | **ĐẠT (100%)** |
