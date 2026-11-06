@@ -121,3 +121,5 @@
 | **Centralized Config** | `appsettings.example.json`, `Configs/V-Eval-Identity_Service/appsettings.json` | **ĐẠT (100%)** |
 | **Brevo SMTP Email Service** | `IEmailService.cs`, `BrevoSmtpEmailService.cs`, `MailKit 4.17.0` | **ĐẠT (100%)** |
 | **Verify Reset OTP (UC 05b)** | `VerifyResetOtpCommand.cs`, `AuthController.cs` (`POST /api/auth/verify-reset-otp`) | **ĐẠT (100%)** |
+| **Multi-Layer Email & DNS MX Validation (UC 01a)** | `EmailValidationHelper.cs`, `ValidateEmailQuery.cs`, `RegisterUserCommand.cs` (`GET /api/auth/validate-email`) | **ĐẠT (100%)** |
+| **3-Way Parent-Student Linking System (UC 41)** | `ParentLinkingFeatures.cs`, `UserRepository.cs`, `UsersController.cs` (`parent-link/connect`, `parent-link/request`, `me/parent-link-overview`) | **ĐẠT (100%)** |

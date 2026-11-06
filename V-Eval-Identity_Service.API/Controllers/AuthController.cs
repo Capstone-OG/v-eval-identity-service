@@ -1,4 +1,4 @@
-﻿using Application.Features.Auth.Commands.ForgotPassword;
+using Application.Features.Auth.Commands.ForgotPassword;
 using Application.Features.Auth.Commands.Login;
 using Application.Features.Auth.Commands.Logout;
 using Application.Features.Auth.Commands.RefreshToken;
@@ -7,6 +7,7 @@ using Application.Features.Auth.Commands.ResetPassword;
 using Application.Features.Auth.Commands.VerifyResetOtp;
 using Application.Features.Auth.Commands.VerifyAccount;
 using Application.Features.Auth.DTOs;
+using Application.Features.Auth.Queries.ValidateEmail;
 using Microsoft.AspNetCore.Mvc;
 using V_Eval_Identity_Service.API.Controllers.Base;
 
@@ -15,6 +16,17 @@ namespace V_Eval_Identity_Service.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ApiControllerBase
 {
+    /// <summary>
+    /// UC 01a: Kiểm tra tính hợp lệ, máy chủ nhận thư DNS MX và trạng thái tồn tại của Email trước khi đăng ký
+    /// </summary>
+    [HttpGet("validate-email")]
+    [ProducesResponseType(typeof(ValidateEmailResponseDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ValidateEmail([FromQuery] string email)
+    {
+        var result = await Mediator.Send(new ValidateEmailQuery(email ?? string.Empty));
+        return HandleResult(result);
+    }
+
     /// <summary>
     /// UC 01: Đăng ký tài khoản mới (Mặc định vai trò STUDENT)
     /// </summary>

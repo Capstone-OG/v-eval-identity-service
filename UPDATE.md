@@ -1,28 +1,15 @@
 # NHẬT KÝ CẬP NHẬT (UPDATE LOG) - IDENTITY SERVICE
 
-## [04/11/2026] - Bổ Sung API Xác Thực Mã OTP Quên Mật Khẩu (UC 05b) & Hoàn Tất Tích Hợp Brevo SMTP Relay
+## [06/11/2026] - Triển Khai Kiểm Tra Email Đa Tầng (DNS MX - UC 01a) & Hệ Thống Liên Kết Phụ Huynh - Học Sinh 3 Phương Thức (Mã Code / Link & QR / Xác Nhận 2 Chiều Trên Web - UC 41)
 
-- **Bổ Sung API Xác Thực Mã OTP Quên Mật Khẩu Chặt Chẽ (UC 05b - `POST /api/auth/verify-reset-otp`)**:
-  - Triển khai `VerifyResetOtpCommand`, `VerifyResetOtpValidator` và `VerifyResetOtpHandler` trong tầng `Application`.
-  - Kiểm tra tính hợp lệ và thời hạn của mã OTP loại `RESET_PASSWORD` trong CSDL trước khi cho phép người dùng chuyển sang bước đặt lại mật khẩu mới.
-  - Ngăn chặn triệt để lỗ hổng cho phép nhập bừa OTP mà vẫn được chuyển qua bước đổi mật khẩu: Nếu OTP sai hoặc hết hạn, trả về mã lỗi HTTP 400 (`Auth.InvalidOtp: "Mã xác thực OTP không chính xác hoặc đã hết hạn."`).
-  - Đăng ký endpoint `POST /api/auth/verify-reset-otp` tại `AuthController.cs`, tự động định tuyến thông qua Gateway YARP `:5212`.
-
-- **Kích Hoạt Tài Khoản Brevo SMTP Thực Tế**:
-  - Đấu nối thành công cấu hình Brevo SMTP Relay (`smtp-relay.brevo.com:587`, STARTTLS) với tài khoản `c17a0c001@smtp-brevo.com` và khóa bảo mật chính thức.
-  - Cấu hình chuẩn hóa thương hiệu người gửi: `V_Eval System <veval.system@gmail.com>`.
-  - Kiểm thử trực tiếp kết nối gửi email HTML chuẩn responsive qua Brevo SMTP thành công 100%.
-
-- **Khắc Phục Cảnh Báo Khởi Động EF Core 9**:
-  - Bổ sung cấu hình `ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))` tại `DependencyInjection.cs`, đảm bảo dịch vụ khởi động tự động áp dụng migration và nạp seed data an toàn không bị gián đoạn.
-
-- **Hiện Thực Đầy Đủ Tầng Email & Nghiệp Vụ CQRS**:
-  - Triển khai `IEmailService` tại tầng `Application` và `BrevoSmtpEmailService` tại tầng `Infrastructure` sử dụng `MailKit` & `MimeKit`.
-  - Tự động phát sinh và gửi email chứa mã OTP 6 số đẹp mắt chuẩn nhận diện V-Eval khi người dùng đăng ký mới (UC 01) và quên mật khẩu (UC 05).
-  - Tích hợp cơ chế Fail-Safe ghi log lỗi an toàn, không gián đoạn tiến trình người dùng nếu có sự cố mạng phía relay.
-
-- **Kiểm Thử Đơn Vị & Vận Hành (Build & Test)**:
-  - Bộ kiểm thử tự động `RegisterUserCommandHandlerTests` đạt **5/5 tests PASS 100%**.
-  - Kiểm thử trực tiếp endpoint `POST /api/auth/verify-reset-otp` qua curl: Chặn đúng mã OTP sai (HTTP 400), chấp nhận mã hợp lệ (HTTP 200).
-  - Biên dịch giải pháp C# sạch tuyệt đối: **0 Warning(s), 0 Error(s)**.
-  - Cụm dịch vụ cục bộ (Identity :5155, Gateway :5212, Practice :5261, Web Client :5173) khởi động thành công và thông suốt toàn diện.
+- **Triển Khai Hệ Thống Liên Kết Phụ Huynh - Học Sinh 3 Phương Thức (`ParentLinkingFeatures.cs`, `UserRepository.cs`, `UsersController.cs`)**:
+  - **Phương thức 1 — Mã Tài Khoản Học Sinh (`VE-XXXXXX`) & Mã PIN 6 Số Động**:
+    - Endpoint `GET /api/v1/users/me/parent-link-overview` cấp mã học sinh cố định `VE-XXXXXX` cùng mã PIN 6 số động hạn 30 phút (`PARENT_LINK_CODE`) trong bảng `v_eval_identity.OtpVerifications`.
+    - Endpoint `POST /api/v1/users/parent-link/connect` cho phép Phụ huynh nhập mã `VE-XXXXXX`, mã PIN 6 số hoặc dán đường dẫn liên kết để thiết lập quan hệ ngay lập tức vào bảng `v_eval_identity.ParentStudentRelations`.
+  - **Phương thức 2 — Đường Liên Kết Mời 1-Click & Mã QR**:
+    - Hỗ trợ giải mã trực tiếp tham số `?parentLinkCode=...` hoặc `?studentCode=...` từ đường liên kết mời hoặc mã QR của học sinh.
+  - **Phương thức 3 — Tìm Theo Email/SĐT Học Sinh & Xác Nhận 2 Chiều Trên Web**:
+    - Endpoint `POST /api/v1/users/parent-link/request` tạo yêu cầu liên kết chờ duyệt (`PARENT_REQ:{ParentId}`) cho học sinh theo Email hoặc Số điện thoại.
+    - Endpoint `POST /api/v1/users/me/parent-link-requests/{requestId}/respond` giúp Học sinh bấm **Chấp nhận / Từ chối** ngay trên Cổng Học Viên (hoàn toàn không phụ thuộc máy chủ gửi thư SMTP).
+- **Triển Khai Bộ Kiểm Tra Email Đa Tầng (`EmailValidationHelper.cs`, `ValidateEmailQuery.cs`, `RegisterUserCommand.cs`)**:
+  - Kiểm tra cú pháp RFC 5322, quy tắc tài khoản Gmail (6–30 ký tự), phát hiện lỗi gõ sai tên miền phổ biến (`gmial.com`, `gamil.com`...), chặn dịch vụ email ảo 10 phút, chặn chuỗi ký tự lặp bất thường (`22222`) và đối soát bản ghi máy chủ nhận thư DNS `MX` trực tuyến (`GET /api/auth/validate-email`).

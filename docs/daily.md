@@ -1,4 +1,23 @@
-﻿# NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
+# NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
+
+## [06/11/2026] - Triển Khai Bộ Kiểm Tra Tính Hợp Lệ Đa Tầng Cho Email Đăng Ký (DNS MX, Chống Email Ảo & Gợi Ý Sửa Lỗi Tên Miền)
+
+- **Triển Khai Bộ Kiểm Tra Email Đa Tầng (`EmailValidationHelper.cs`)**:
+  - Kiểm tra cú pháp chuẩn RFC 5322, cấu trúc TLD quốc tế và quy tắc riêng của Google Gmail (6–30 ký tự, chỉ chữ cái/chữ số/dấu chấm, không chỉ bao gồm toàn chữ số).
+  - Phát hiện các lỗi gõ sai tên miền phổ biến (`gmial.com`, `gamil.com`, `gmail.con`, `yaho.com`, `hotmial.com`, `outlok.com`, `fpt.edu.v`...) kèm gợi ý sửa chính xác.
+  - Chặn các dịch vụ email ảo/tạm thời (`yopmail.com`, `mailinator.com`, `10minutemail.com`, `tempmail.com`...) và chặn chuỗi ký tự lặp bất thường (`22222`, `1111`, `aaaa`...) khi người dùng nhập email giả lập.
+  - Xác minh trực tuyến bản ghi máy chủ nhận thư DNS MX (`type=15`) qua Google DNS-over-HTTPS (`https://dns.google/resolve`).
+- **Bổ Sung API Kiểm Tra Email Trực Tuyến (`GET /api/auth/validate-email` - UC 01a)**:
+  - Triển khai `ValidateEmailQuery` và `ValidateEmailHandler` kiểm tra đồng thời tính hợp lệ của email, sự tồn tại của máy chủ mail MX và trạng thái tài khoản trong CSDL `v_eval_identity.users`.
+- **Nâng Cấp Nghiệp Vụ Đăng Ký (`RegisterUserCommand.cs`)**:
+  - Tích hợp `EmailValidationHelper.ValidateEmailComprehensiveAsync` vào cả `RegisterUserValidator` và `RegisterUserHandler`.
+  - Xử lý thông minh tài khoản chưa kích hoạt OTP (`IsActive == false`): Cho phép cập nhật lại thông tin và cấp mã OTP mới thay vì báo lỗi `409 Conflict` khóa cứng email chưa kích hoạt.
+- **Triển Khai Phân Hệ Liên Kết Phụ Huynh - Học Sinh 3 Phương Thức (`ParentLinkingFeatures.cs`, `UserRepository.cs`, `UsersController.cs`)**:
+  - **Phương thức 1 (Mã Tài Khoản Học Sinh `VE-XXXXXX` & Mã PIN 6 Số)**: Sinh mã định danh cố định `VE-XXXXXX` từ `StudentId` kèm mã PIN 6 số động hạn 30 phút (`PARENT_LINK_CODE`) trong bảng `v_eval_identity.OtpVerifications`; endpoint `POST /api/v1/users/parent-link/connect` cho phép Phụ huynh nhập mã kết nối tức thì vào bảng `v_eval_identity.ParentStudentRelations`.
+  - **Phương thức 2 (Đường Liên Kết Mời 1-Click & Mã QR)**: Tự động bóc tách tham số `?parentLinkCode=...` hoặc `?studentCode=...` từ đường dẫn URL / QR Code để kết nối tài khoản học sinh và phụ huynh.
+  - **Phương thức 3 (Gửi Yêu Cầu Theo Email/SĐT Học Sinh & Xác Nhận 2 Chiều Trên Web)**: Endpoint `POST /api/v1/users/parent-link/request` tạo yêu cầu chờ duyệt (`PARENT_REQ:{ParentId}`); học sinh xem danh sách qua `GET /api/v1/users/me/parent-link-overview` và bấm xác nhận trực tiếp trên Web qua `POST /api/v1/users/me/parent-link-requests/{requestId}/respond` (hoàn toàn không phụ thuộc máy chủ gửi thư SMTP).
+
+---
 
 ## [04/11/2026] - Triển Khai Phân Hệ Brevo SMTP Email Service, Khóa API Thực Tế & Khắc Phục Khởi Chạy EF Core 9
 

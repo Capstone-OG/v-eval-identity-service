@@ -1,8 +1,10 @@
+using Application.Common.Interfaces.Repositories;
 using Application.Features.Users.Commands.ChangePassword;
 using Application.Features.Users.Commands.ProvisionUser;
 using Application.Features.Users.Commands.ToggleUserStatus;
 using Application.Features.Users.Commands.UpdateProfile;
 using Application.Features.Users.DTOs;
+using Application.Features.Users.ParentLinking;
 using Application.Features.Users.Queries.GetCurrentUser;
 using Application.Features.Users.Queries.GetUsers;
 using Microsoft.AspNetCore.Authorization;
@@ -96,6 +98,61 @@ public class UsersController : ApiControllerBase
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordCommand command)
     {
         var result = await Mediator.Send(command);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// UC 41a: Lấy thông tin Mã Liên Kết Tài Khoản Học Sinh (VE-XXXXXX), Mã PIN 6 số, QR Link & Danh sách Yêu cầu liên kết từ Phụ huynh
+    /// </summary>
+    [HttpGet("me/parent-link-overview")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(StudentParentLinkOverviewDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetStudentParentLinkOverview(
+        [FromQuery] Guid? studentId = null,
+        [FromQuery] bool regeneratePin = false)
+    {
+        var result = await Mediator.Send(new GetStudentParentLinkOverviewQuery(studentId, regeneratePin));
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// UC 41b: Phụ huynh liên kết tài khoản học sinh bằng Mã Tài Khoản (VE-XXXXXX), Mã PIN 6 số hoặc Đường Liên Kết / QR
+    /// </summary>
+    [HttpPost("parent-link/connect")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ParentLinkResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ConnectParentByCode([FromBody] ConnectParentByCodeCommand command)
+    {
+        var result = await Mediator.Send(command);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// UC 41c: Phụ huynh gửi yêu cầu liên kết 2 chiều theo Email / SĐT của học sinh
+    /// </summary>
+    [HttpPost("parent-link/request")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ParentLinkResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RequestParentLink([FromBody] CreateParentLinkRequestCommand command)
+    {
+        var result = await Mediator.Send(command);
+        return HandleResult(result);
+    }
+
+    /// <summary>
+    /// UC 41d: Học sinh xác nhận (Chấp nhận / Từ chối) yêu cầu liên kết từ Phụ huynh ngay trên Web
+    /// </summary>
+    [HttpPost("me/parent-link-requests/{requestId:guid}/respond")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ParentLinkResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RespondParentLinkRequest(
+        [FromRoute] Guid requestId,
+        [FromBody] RespondParentLinkRequestCommand command)
+    {
+        var result = await Mediator.Send(command with { RequestId = requestId });
         return HandleResult(result);
     }
 }
