@@ -2,6 +2,11 @@
 
 ## [07/11/2026] - Tích Hợp Kiểm Tra Email Đa Tầng (DNS MX & Chống Typo Tên Miền) Vào Phân Hệ Cấp Phát Tài Khoản (IAM Provisioning) & Khắc Phục Triệt Để Lỗi Null CampusId Học Sinh
 
+- **Triển Khai Phân Hệ Quản Lý Tài Khoản Ngừng Hoạt Động (Soft Delete / Inactive) & Thống Kê Số Lượng Hoạt Động ([`GetUsersQuery.cs`](../V-Eval-Identity_Service.Application/Features/Users/Queries/GetUsers/GetUsersQuery.cs), [`UserRepository.cs`](../V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/UserRepository.cs), [`UsersController.cs`](../V-Eval-Identity_Service.API/Controllers/UsersController.cs))**:
+  - Bổ sung tham số lọc `bool? isActive` vào truy vấn `GetUsersQuery` và endpoint `GET /api/v1/users`, cho phép phân tách rạch ròi giữa tài khoản đang hoạt động (`isActive = true`) và tài khoản đã ngừng hoạt động/ẩn (`isActive = false`).
+  - Nâng cấp `PagedUsersResult` trả về đồng thời `ActiveCount` và `InactiveCount` theo thời gian thực từ cơ sở dữ liệu PostgreSQL.
+  - Nâng cấp lệnh `ToggleUserStatusCommand` (`PATCH /api/v1/users/{id}/toggle-status`) hỗ trợ tham số `targetStatus` tùy chọn, cho phép chủ động đặt trạng thái kích hoạt hoặc ngừng hoạt động có kiểm soát.
+  - Bảo đảm nguyên tắc Soft Delete: Không xóa cứng dữ liệu khỏi bảng `Users`, bảo toàn 100% lịch sử nộp bài thi, giao dịch học phí và liên kết phụ huynh.
 - **Tích Hợp Bộ Kiểm Tra Email Đa Tầng Vào Cấp Phát Tài Khoản ([`ProvisionUserCommand.cs`](../V-Eval-Identity_Service.Application/Features/Users/Commands/ProvisionUser/ProvisionUserCommand.cs))**:
   - Tích hợp `EmailValidationHelper.ValidateEmailComprehensiveAsync` vào lệnh `ProvisionUserCommand` trước khi lưu vào CSDL.
   - Bổ sung phát hiện lỗi gõ nhầm tên miền `mail.com` thành `gmail.com` trong [`EmailValidationHelper.cs`](../V-Eval-Identity_Service.Application/Common/Validators/EmailValidationHelper.cs) (`CommonDomainTypos`).

@@ -31,7 +31,7 @@ public class UsersController : ApiControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách toàn bộ tài khoản người dùng trong hệ thống (Hỗ trợ lọc theo Vai trò, Cơ sở, Tìm kiếm)
+    /// Lấy danh sách toàn bộ tài khoản người dùng trong hệ thống (Hỗ trợ lọc theo Vai trò, Cơ sở, Trạng thái kích hoạt, Tìm kiếm)
     /// </summary>
     [HttpGet]
     [AllowAnonymous]
@@ -40,10 +40,11 @@ public class UsersController : ApiControllerBase
         [FromQuery] string? role,
         [FromQuery] Guid? campusId,
         [FromQuery] string? search,
+        [FromQuery] bool? isActive,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
-        var result = await Mediator.Send(new GetUsersQuery(role, campusId, search, page, pageSize));
+        var result = await Mediator.Send(new GetUsersQuery(role, campusId, search, isActive, page, pageSize));
         return HandleResult(result);
     }
 
@@ -63,15 +64,17 @@ public class UsersController : ApiControllerBase
     }
 
     /// <summary>
-    /// Khóa hoặc mở khóa trạng thái kích hoạt tài khoản
+    /// Khóa, mở khóa hoặc đặt trạng thái kích hoạt tài khoản
     /// </summary>
     [HttpPatch("{id:guid}/toggle-status")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ToggleStatus([FromRoute] Guid id)
+    public async Task<IActionResult> ToggleStatus(
+        [FromRoute] Guid id,
+        [FromQuery] bool? targetStatus = null)
     {
-        var result = await Mediator.Send(new ToggleUserStatusCommand(id));
+        var result = await Mediator.Send(new ToggleUserStatusCommand(id, targetStatus));
         return HandleResult(result);
     }
 

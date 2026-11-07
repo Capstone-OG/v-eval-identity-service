@@ -45,18 +45,28 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         return !await _dbSet.AnyAsync(u => u.Email == email, cancellationToken);
     }
 
-    public async Task<(IReadOnlyList<UserWithProfileInfo> Items, int TotalCount)> GetUsersPagedAsync(
+    public async Task<(IReadOnlyList<UserWithProfileInfo> Items, int TotalCount, int ActiveCount, int InactiveCount)> GetUsersPagedAsync(
         string? role = null,
         Guid? campusId = null,
         string? search = null,
+        bool? isActive = null,
         int page = 1,
         int pageSize = 50,
         CancellationToken cancellationToken = default)
     {
+        var baseCountQuery = _dbSet.AsNoTracking();
+        var activeCount = await baseCountQuery.CountAsync(u => u.IsActive, cancellationToken);
+        var inactiveCount = await baseCountQuery.CountAsync(u => !u.IsActive, cancellationToken);
+
         var query = _dbSet
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .AsNoTracking();
+
+        if (isActive.HasValue)
+        {
+            query = query.Where(u => u.IsActive == isActive.Value);
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -114,7 +124,7 @@ public class UserRepository : GenericRepository<User>, IUserRepository
             return new UserWithProfileInfo(u, cid, cname, spec);
         }).ToList();
 
-        return (items, totalCount);
+        return (items, totalCount, activeCount, inactiveCount);
     }
 
     public async Task AddTeacherProfileAsync(Guid teacherId, Guid campusId, string specialty, CancellationToken cancellationToken = default)

@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.Users.Commands.ToggleUserStatus;
 
-public record ToggleUserStatusCommand(Guid UserId) : IRequest<Result<bool>>;
+public record ToggleUserStatusCommand(Guid UserId, bool? TargetStatus = null) : IRequest<Result<bool>>;
 
 public class ToggleUserStatusHandler : IRequestHandler<ToggleUserStatusCommand, Result<bool>>
 {
@@ -30,7 +30,7 @@ public class ToggleUserStatusHandler : IRequestHandler<ToggleUserStatusCommand, 
             return Result<bool>.Failure(Error.NotFound("User.NotFound", "Không tìm thấy người dùng."));
         }
 
-        user.IsActive = !user.IsActive;
+        user.IsActive = request.TargetStatus ?? !user.IsActive;
         _userRepository.Update(user);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
