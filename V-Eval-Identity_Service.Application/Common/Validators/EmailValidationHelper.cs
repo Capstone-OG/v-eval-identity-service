@@ -38,6 +38,7 @@ public static class EmailValidationHelper
 
     private static readonly Dictionary<string, string> CommonDomainTypos = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["mail.com"] = "gmail.com",
         ["gmial.com"] = "gmail.com",
         ["gamil.com"] = "gmail.com",
         ["gmai.com"] = "gmail.com",
