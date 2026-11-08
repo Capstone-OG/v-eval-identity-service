@@ -8,6 +8,8 @@ namespace Application.Features.Users.Queries.GetUsers;
 public record PagedUsersResult(
     IReadOnlyList<UserAdminDto> Items,
     int TotalCount,
+    int ActiveCount,
+    int InactiveCount,
     int Page,
     int PageSize
 );
@@ -16,6 +18,7 @@ public record GetUsersQuery(
     string? Role = null,
     Guid? CampusId = null,
     string? Search = null,
+    bool? IsActive = null,
     int Page = 1,
     int PageSize = 50
 ) : IRequest<Result<PagedUsersResult>>;
@@ -33,10 +36,11 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<PagedUsersR
         GetUsersQuery request,
         CancellationToken cancellationToken)
     {
-        var (items, totalCount) = await _userRepository.GetUsersPagedAsync(
+        var (items, totalCount, activeCount, inactiveCount) = await _userRepository.GetUsersPagedAsync(
             request.Role,
             request.CampusId,
             request.Search,
+            request.IsActive,
             request.Page,
             request.PageSize,
             cancellationToken);
@@ -64,6 +68,6 @@ public class GetUsersHandler : IRequestHandler<GetUsersQuery, Result<PagedUsersR
             );
         }).ToList();
 
-        return Result<PagedUsersResult>.Success(new PagedUsersResult(dtos, totalCount, request.Page, request.PageSize));
+        return Result<PagedUsersResult>.Success(new PagedUsersResult(dtos, totalCount, activeCount, inactiveCount, request.Page, request.PageSize));
     }
 }

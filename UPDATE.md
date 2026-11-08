@@ -1,28 +1,20 @@
 # NHẬT KÝ CẬP NHẬT (UPDATE LOG) - IDENTITY SERVICE
 
-## [04/11/2026] - Bổ Sung API Xác Thực Mã OTP Quên Mật Khẩu (UC 05b) & Hoàn Tất Tích Hợp Brevo SMTP Relay
+## [07/11/2026] - Phân Hệ Quản Lý Tài Khoản Ngừng Hoạt Động (Soft Delete / Inactive), Lọc Trạng Thái & Tích Hợp Kiểm Tra Email Đa Tầng Cấp Phát IAM
 
-- **Bổ Sung API Xác Thực Mã OTP Quên Mật Khẩu Chặt Chẽ (UC 05b - `POST /api/auth/verify-reset-otp`)**:
-  - Triển khai `VerifyResetOtpCommand`, `VerifyResetOtpValidator` và `VerifyResetOtpHandler` trong tầng `Application`.
-  - Kiểm tra tính hợp lệ và thời hạn của mã OTP loại `RESET_PASSWORD` trong CSDL trước khi cho phép người dùng chuyển sang bước đặt lại mật khẩu mới.
-  - Ngăn chặn triệt để lỗ hổng cho phép nhập bừa OTP mà vẫn được chuyển qua bước đổi mật khẩu: Nếu OTP sai hoặc hết hạn, trả về mã lỗi HTTP 400 (`Auth.InvalidOtp: "Mã xác thực OTP không chính xác hoặc đã hết hạn."`).
-  - Đăng ký endpoint `POST /api/auth/verify-reset-otp` tại `AuthController.cs`, tự động định tuyến thông qua Gateway YARP `:5212`.
-
-- **Kích Hoạt Tài Khoản Brevo SMTP Thực Tế**:
-  - Đấu nối thành công cấu hình Brevo SMTP Relay (`smtp-relay.brevo.com:587`, STARTTLS) với tài khoản `c17a0c001@smtp-brevo.com` và khóa bảo mật chính thức.
-  - Cấu hình chuẩn hóa thương hiệu người gửi: `V_Eval System <veval.system@gmail.com>`.
-  - Kiểm thử trực tiếp kết nối gửi email HTML chuẩn responsive qua Brevo SMTP thành công 100%.
-
-- **Khắc Phục Cảnh Báo Khởi Động EF Core 9**:
-  - Bổ sung cấu hình `ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning))` tại `DependencyInjection.cs`, đảm bảo dịch vụ khởi động tự động áp dụng migration và nạp seed data an toàn không bị gián đoạn.
-
-- **Hiện Thực Đầy Đủ Tầng Email & Nghiệp Vụ CQRS**:
-  - Triển khai `IEmailService` tại tầng `Application` và `BrevoSmtpEmailService` tại tầng `Infrastructure` sử dụng `MailKit` & `MimeKit`.
-  - Tự động phát sinh và gửi email chứa mã OTP 6 số đẹp mắt chuẩn nhận diện V-Eval khi người dùng đăng ký mới (UC 01) và quên mật khẩu (UC 05).
-  - Tích hợp cơ chế Fail-Safe ghi log lỗi an toàn, không gián đoạn tiến trình người dùng nếu có sự cố mạng phía relay.
-
-- **Kiểm Thử Đơn Vị & Vận Hành (Build & Test)**:
-  - Bộ kiểm thử tự động `RegisterUserCommandHandlerTests` đạt **5/5 tests PASS 100%**.
-  - Kiểm thử trực tiếp endpoint `POST /api/auth/verify-reset-otp` qua curl: Chặn đúng mã OTP sai (HTTP 400), chấp nhận mã hợp lệ (HTTP 200).
-  - Biên dịch giải pháp C# sạch tuyệt đối: **0 Warning(s), 0 Error(s)**.
-  - Cụm dịch vụ cục bộ (Identity :5155, Gateway :5212, Practice :5261, Web Client :5173) khởi động thành công và thông suốt toàn diện.
+- **Phân Hệ Quản Lý Tài Khoản Ngừng Hoạt Động & Thống Kê Số Lượng Realtime ([`GetUsersQuery.cs`](./V-Eval-Identity_Service.Application/Features/Users/Queries/GetUsers/GetUsersQuery.cs), [`UserRepository.cs`](./V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/UserRepository.cs), [`UsersController.cs`](./V-Eval-Identity_Service.API/Controllers/UsersController.cs))**:
+  - Bổ sung bộ lọc `bool? isActive` vào lệnh `GetUsersQuery` và endpoint `GET /api/v1/users`, hỗ trợ lọc chính xác tài khoản đang hoạt động (`isActive = true`) hoặc tài khoản đã ngừng hoạt động/ẩn (`isActive = false`).
+  - Nâng cấp `PagedUsersResult` trả về đồng thời `ActiveCount` và `InactiveCount` theo thời gian thực từ bảng `v_eval_identity."Users"`.
+  - Nâng cấp `ToggleUserStatusCommand` (`PATCH /api/v1/users/{id}/toggle-status`) hỗ trợ tham số `targetStatus` tùy chọn, cho phép chủ động đặt trạng thái kích hoạt hoặc ngừng hoạt động có kiểm soát.
+  - Tuân thủ nghiêm ngặt nguyên tắc Soft Delete: Không bao giờ xóa cứng dữ liệu khỏi bảng `Users`, bảo toàn 100% lịch sử nộp bài thi, giao dịch học phí và liên kết phụ huynh.
+- **Tích Hợp Kiểm Tra Email Đa Tầng Vào Cấp Phát Tài Khoản ([`ProvisionUserCommand.cs`](./V-Eval-Identity_Service.Application/Features/Users/Commands/ProvisionUser/ProvisionUserCommand.cs))**:
+  - Tích hợp `EmailValidationHelper.ValidateEmailComprehensiveAsync` vào lệnh cấp phát tài khoản trực tiếp `ProvisionUserCommand`.
+  - Bổ sung phát hiện lỗi gõ nhầm tên miền `mail.com` thành `gmail.com` trong [`EmailValidationHelper.cs`](./V-Eval-Identity_Service.Application/Common/Validators/EmailValidationHelper.cs) (`CommonDomainTypos`).
+  - Chặn đứng các trường hợp nhập sai email, tên miền không có bản ghi DNS MX, dịch vụ email rác/ảo 10 phút và chuỗi ký tự lặp giả mạo (`22222`).
+- **Khắc Phục Lỗi Null `CampusId` Khi Tải Danh Sách Người Dùng ([`Student.cs`](./V-Eval-Identity_Service.Domain/Entities/Profiles/Student.cs), [`IdentityGrpcService.cs`](./V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Chuyển trường `CampusId` trong thực thể `Student` sang dạng nullable (`Guid?`) cho phép EF Core ánh xạ an toàn các bản ghi học sinh cũ chưa gán cơ sở.
+  - Cập nhật logic xử lý an toàn trong `IdentityGrpcService.cs`, loại bỏ hoàn toàn ngoại lệ `InvalidCastException: Column 'campus_id' is null` gây lỗi HTTP 500 khi gọi `GET /api/v1/users`.
+  - Cập nhật 5 bản ghi học sinh thiếu cơ sở trong CSDL PostgreSQL sang cơ sở mặc định `CS_THU_DUC` (`3fa85f64-5717-4562-b3fc-2c963f66afa6`).
+- **Kiểm Thử & Vận Hành**:
+  - Biên dịch .NET 9 SDK đạt chuẩn 100% sạch (0 Warning, 0 Error).
+  - Toàn bộ 5/5 kiểm thử xUnit đạt Passed 100%.

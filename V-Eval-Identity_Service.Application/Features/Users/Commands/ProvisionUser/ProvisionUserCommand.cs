@@ -1,6 +1,7 @@
 using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repositories;
 using Application.Common.Models;
+using Application.Common.Validators;
 using Application.Features.Users.DTOs;
 using Domain.Constants;
 using Domain.Entities.Iam;
@@ -25,7 +26,9 @@ public class ProvisionUserValidator : AbstractValidator<ProvisionUserCommand>
 {
     public ProvisionUserValidator()
     {
-        RuleFor(x => x.Email).NotEmpty().WithMessage("Email không được để trống.");
+        RuleFor(x => x.Email)
+            .NotEmpty().WithMessage("Email không được để trống.")
+            .EmailAddress().WithMessage("Email không đúng định dạng chuẩn RFC 5322.");
         RuleFor(x => x.FullName).NotEmpty().WithMessage("Họ và tên không được để trống.");
         RuleFor(x => x.RoleName)
             .NotEmpty()
@@ -65,7 +68,15 @@ public class ProvisionUserHandler : IRequestHandler<ProvisionUserCommand, Result
     {
         var emailNormalized = request.Email.Trim().ToLowerInvariant();
 
-        // 1. Kiểm tra email đã tồn tại hay chưa
+        // 1. Kiểm tra tính hợp lệ sâu của Email (cú pháp, phát hiện typo domain mail.com -> gmail.com, chặn disposable, check DNS MX)
+        var validation = await EmailValidationHelper.ValidateEmailComprehensiveAsync(emailNormalized, cancellationToken);
+        if (!validation.IsValid)
+        {
+            return Result<UserAdminDto>.Failure(
+                Error.Validation("User.InvalidEmail", validation.Message));
+        }
+
+        // 2. Kiểm tra email đã tồn tại hay chưa
         var isUnique = await _userRepository.IsEmailUniqueAsync(emailNormalized, cancellationToken);
         if (!isUnique)
         {

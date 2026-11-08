@@ -1,4 +1,42 @@
-﻿# NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
+# NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
+
+## [07/11/2026] - Tích Hợp Kiểm Tra Email Đa Tầng (DNS MX & Chống Typo Tên Miền) Vào Phân Hệ Cấp Phát Tài Khoản (IAM Provisioning) & Khắc Phục Triệt Để Lỗi Null CampusId Học Sinh
+
+- **Triển Khai Phân Hệ Quản Lý Tài Khoản Ngừng Hoạt Động (Soft Delete / Inactive) & Thống Kê Số Lượng Hoạt Động ([`GetUsersQuery.cs`](../V-Eval-Identity_Service.Application/Features/Users/Queries/GetUsers/GetUsersQuery.cs), [`UserRepository.cs`](../V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/UserRepository.cs), [`UsersController.cs`](../V-Eval-Identity_Service.API/Controllers/UsersController.cs))**:
+  - Bổ sung tham số lọc `bool? isActive` vào truy vấn `GetUsersQuery` và endpoint `GET /api/v1/users`, cho phép phân tách rạch ròi giữa tài khoản đang hoạt động (`isActive = true`) và tài khoản đã ngừng hoạt động/ẩn (`isActive = false`).
+  - Nâng cấp `PagedUsersResult` trả về đồng thời `ActiveCount` và `InactiveCount` theo thời gian thực từ cơ sở dữ liệu PostgreSQL.
+  - Nâng cấp lệnh `ToggleUserStatusCommand` (`PATCH /api/v1/users/{id}/toggle-status`) hỗ trợ tham số `targetStatus` tùy chọn, cho phép chủ động đặt trạng thái kích hoạt hoặc ngừng hoạt động có kiểm soát.
+  - Bảo đảm nguyên tắc Soft Delete: Không xóa cứng dữ liệu khỏi bảng `Users`, bảo toàn 100% lịch sử nộp bài thi, giao dịch học phí và liên kết phụ huynh.
+- **Tích Hợp Bộ Kiểm Tra Email Đa Tầng Vào Cấp Phát Tài Khoản ([`ProvisionUserCommand.cs`](../V-Eval-Identity_Service.Application/Features/Users/Commands/ProvisionUser/ProvisionUserCommand.cs))**:
+  - Tích hợp `EmailValidationHelper.ValidateEmailComprehensiveAsync` vào lệnh `ProvisionUserCommand` trước khi lưu vào CSDL.
+  - Bổ sung phát hiện lỗi gõ nhầm tên miền `mail.com` thành `gmail.com` trong [`EmailValidationHelper.cs`](../V-Eval-Identity_Service.Application/Common/Validators/EmailValidationHelper.cs) (`CommonDomainTypos`).
+  - Chặn đứng các trường hợp nhập sai email, tên miền không có bản ghi DNS MX, dịch vụ email rác/ảo 10 phút và chuỗi ký tự lặp giả mạo (`22222`).
+- **Khắc Phục Triệt Để Lỗi Null `CampusId` Khi Tải Danh Sách Người Dùng ([`Student.cs`](../V-Eval-Identity_Service.Domain/Entities/Profiles/Student.cs), [`IdentityGrpcService.cs`](../V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Chuyển trường `CampusId` trong thực thể `Student` sang dạng nullable (`Guid?`) cho phép EF Core ánh xạ an toàn các bản ghi học sinh cũ chưa gán cơ sở.
+  - Cập nhật logic xử lý an toàn trong `IdentityGrpcService.cs`, loại bỏ hoàn toàn ngoại lệ `InvalidCastException: Column 'campus_id' is null` gây lỗi HTTP 500 khi gọi `GET /api/v1/users`.
+  - Cập nhật 5 bản ghi học sinh thiếu cơ sở trong CSDL PostgreSQL sang cơ sở mặc định `CS_THU_DUC` (`3fa85f64-5717-4562-b3fc-2c963f66afa6`).
+- **Kiểm Thử & Biên Dịch**:
+  - Biên dịch .NET 9 SDK đạt chuẩn 100% sạch (0 Warning, 0 Error).
+  - Toàn bộ 5/5 kiểm thử xUnit đạt Passed 100%.
+
+---
+
+- **Triển Khai Bộ Kiểm Tra Email Đa Tầng (`EmailValidationHelper.cs`)**:
+  - Kiểm tra cú pháp chuẩn RFC 5322, cấu trúc TLD quốc tế và quy tắc riêng của Google Gmail (6–30 ký tự, chỉ chữ cái/chữ số/dấu chấm, không chỉ bao gồm toàn chữ số).
+  - Phát hiện các lỗi gõ sai tên miền phổ biến (`gmial.com`, `gamil.com`, `gmail.con`, `yaho.com`, `hotmial.com`, `outlok.com`, `fpt.edu.v`...) kèm gợi ý sửa chính xác.
+  - Chặn các dịch vụ email ảo/tạm thời (`yopmail.com`, `mailinator.com`, `10minutemail.com`, `tempmail.com`...) và chặn chuỗi ký tự lặp bất thường (`22222`, `1111`, `aaaa`...) khi người dùng nhập email giả lập.
+  - Xác minh trực tuyến bản ghi máy chủ nhận thư DNS MX (`type=15`) qua Google DNS-over-HTTPS (`https://dns.google/resolve`).
+- **Bổ Sung API Kiểm Tra Email Trực Tuyến (`GET /api/auth/validate-email` - UC 01a)**:
+  - Triển khai `ValidateEmailQuery` và `ValidateEmailHandler` kiểm tra đồng thời tính hợp lệ của email, sự tồn tại của máy chủ mail MX và trạng thái tài khoản trong CSDL `v_eval_identity.users`.
+- **Nâng Cấp Nghiệp Vụ Đăng Ký (`RegisterUserCommand.cs`)**:
+  - Tích hợp `EmailValidationHelper.ValidateEmailComprehensiveAsync` vào cả `RegisterUserValidator` và `RegisterUserHandler`.
+  - Xử lý thông minh tài khoản chưa kích hoạt OTP (`IsActive == false`): Cho phép cập nhật lại thông tin và cấp mã OTP mới thay vì báo lỗi `409 Conflict` khóa cứng email chưa kích hoạt.
+- **Triển Khai Phân Hệ Liên Kết Phụ Huynh - Học Sinh 3 Phương Thức (`ParentLinkingFeatures.cs`, `UserRepository.cs`, `UsersController.cs`)**:
+  - **Phương thức 1 (Mã Tài Khoản Học Sinh `VE-XXXXXX` & Mã PIN 6 Số)**: Sinh mã định danh cố định `VE-XXXXXX` từ `StudentId` kèm mã PIN 6 số động hạn 30 phút (`PARENT_LINK_CODE`) trong bảng `v_eval_identity.OtpVerifications`; endpoint `POST /api/v1/users/parent-link/connect` cho phép Phụ huynh nhập mã kết nối tức thì vào bảng `v_eval_identity.ParentStudentRelations`.
+  - **Phương thức 2 (Đường Liên Kết Mời 1-Click & Mã QR)**: Tự động bóc tách tham số `?parentLinkCode=...` hoặc `?studentCode=...` từ đường dẫn URL / QR Code để kết nối tài khoản học sinh và phụ huynh.
+  - **Phương thức 3 (Gửi Yêu Cầu Theo Email/SĐT Học Sinh & Xác Nhận 2 Chiều Trên Web)**: Endpoint `POST /api/v1/users/parent-link/request` tạo yêu cầu chờ duyệt (`PARENT_REQ:{ParentId}`); học sinh xem danh sách qua `GET /api/v1/users/me/parent-link-overview` và bấm xác nhận trực tiếp trên Web qua `POST /api/v1/users/me/parent-link-requests/{requestId}/respond` (hoàn toàn không phụ thuộc máy chủ gửi thư SMTP).
+
+---
 
 ## [04/11/2026] - Triển Khai Phân Hệ Brevo SMTP Email Service, Khóa API Thực Tế & Khắc Phục Khởi Chạy EF Core 9
 

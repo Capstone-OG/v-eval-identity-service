@@ -44,7 +44,7 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             IsValid = hasRole,
             IsActive = user.IsActive,
             RoleName = user.UserRoles.FirstOrDefault()?.Role.RoleName ?? string.Empty,
-            CampusId = student != null ? student.CampusId.ToString() : string.Empty
+            CampusId = student?.CampusId?.ToString() ?? string.Empty
         };
     }
 
@@ -62,13 +62,15 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             return new GetStudentSummaryResponse { Exists = false };
         }
 
-        var campus = await _context.Campuses.FirstOrDefaultAsync(c => c.CampusId == student.CampusId);
+        var campus = student.CampusId.HasValue 
+            ? await _context.Campuses.FirstOrDefaultAsync(c => c.CampusId == student.CampusId.Value)
+            : null;
         string campusName = campus?.Name ?? string.Empty;
 
         return new GetStudentSummaryResponse
         {
             StudentId = student.StudentId.ToString(),
-            CampusId = student.CampusId.ToString(),
+            CampusId = student.CampusId?.ToString() ?? string.Empty,
             CampusName = campusName,
             TargetScore = student.TargetScore ?? 0,
             ExamDate = student.ExamDate?.ToString("yyyy-MM-dd") ?? string.Empty,
@@ -115,7 +117,7 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
                 StudentId = rel.StudentId.ToString(),
                 Name = user?.FullName ?? "Học sinh",
                 Email = user?.Email ?? string.Empty,
-                CampusId = student != null ? student.CampusId.ToString() : string.Empty
+                CampusId = student?.CampusId?.ToString() ?? string.Empty
             });
         }
 

@@ -1,6 +1,7 @@
 using Application.Common.Interfaces;
 using Application.Common.Interfaces.Repositories;
 using Application.Common.Models;
+using Application.Common.Validators;
 using Application.Features.Auth.DTOs;
 using Domain.Constants;
 using Domain.Entities.Iam;
@@ -25,9 +26,17 @@ public class RegisterUserValidator : AbstractValidator<RegisterUserCommand>
     public RegisterUserValidator()
     {
         RuleFor(x => x.Email)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Email không được để trống.")
-            .EmailAddress().WithMessage("Định dạng email không hợp lệ.")
-            .MaximumLength(150).WithMessage("Email không được vượt quá 150 ký tự.");
+            .MaximumLength(150).WithMessage("Email không được vượt quá 150 ký tự.")
+            .CustomAsync(async (email, context, cancellationToken) =>
+            {
+                var check = await EmailValidationHelper.ValidateEmailComprehensiveAsync(email, cancellationToken);
+                if (!check.IsValid)
+                {
+                    context.AddFailure("Email", check.Message);
+                }
+            });
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Mật khẩu không được để trống.")
@@ -88,7 +97,54 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
     {
         var emailNormalized = request.Email.Trim().ToLowerInvariant();
 
-        // 1. Kiểm tra email đã tồn tại chưa
+        // 0. Kiểm tra tính hợp lệ của Email (cú pháp, quy tắc Gmail, chống chuỗi lặp giả mạo, kiểm tra DNS MX)
+        var emailCheck = await EmailValidationHelper.ValidateEmailComprehensiveAsync(emailNormalized, cancellationToken);
+        if (!emailCheck.IsValid)
+        {
+            return Result<RegisterResponseDto>.Failure(
+                Error.Validation("Auth.InvalidEmail", emailCheck.Message));
+        }
+
+        // 1. Kiểm tra email đã tồn tại trong CSDL chưa
+        var existingUser = await _userRepository.GetByEmailWithRolesAsync(emailNormalized, cancellationToken);
+        if (existingUser != null)
+        {
+            if (existingUser.IsActive)
+            {
+                return Result<RegisterResponseDto>.Failure(
+                    Error.Conflict("Auth.EmailAlreadyExists", "Email này đã được đăng ký và kích hoạt bởi một tài khoản khác."));
+            }
+
+            // Nếu tài khoản trước đó chưa kích hoạt OTP (IsActive == false), cập nhật lại thông tin và cấp mã OTP mới
+            existingUser.FullName = request.FullName.Trim();
+            existingUser.Phone = request.Phone.Trim();
+            existingUser.PasswordHash = _passwordHasher.Hash(request.Password);
+            _userRepository.Update(existingUser);
+
+            var resendOtp = _otpService.GenerateOtpCode();
+            var resendVerification = new OtpVerification
+            {
+                Email = emailNormalized,
+                OtpCode = resendOtp,
+                Type = "REGISTER_VERIFY",
+                ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _otpRepository.AddAsync(resendVerification, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            await _emailService.SendRegistrationOtpEmailAsync(existingUser.Email, existingUser.FullName, resendOtp, cancellationToken);
+
+            return Result<RegisterResponseDto>.Success(new RegisterResponseDto(
+                existingUser.UserId,
+                existingUser.Email,
+                existingUser.FullName,
+                "Đã gửi mã xác thực OTP đến email của bạn. Vui lòng nhập mã OTP để xác minh email và kích hoạt tài khoản.",
+                resendOtp
+            ));
+        }
+
         var isEmailUnique = await _userRepository.IsEmailUniqueAsync(emailNormalized, cancellationToken);
         if (!isEmailUnique)
         {
@@ -108,7 +164,7 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
         // 3. Băm mật khẩu
         var passwordHash = _passwordHasher.Hash(request.Password);
 
-        // 4. Tạo User entity với IsActive = false
+        // 4. Tạo User entity với IsActive = false (chờ xác thực OTP)
         var user = new User
         {
             Email = emailNormalized,
@@ -171,8 +227,8 @@ public class RegisterUserHandler : IRequestHandler<RegisterUserCommand, Result<R
             user.UserId,
             user.Email,
             user.FullName,
-            "Đăng ký thành công. Vui lòng xác thực tài khoản bằng mã OTP đã được gửi.",
-            otpCode // Trả kèm OTP để thuận tiện kiểm thử
+            "Đã gửi mã xác thực OTP đến email của bạn. Vui lòng nhập mã OTP để xác minh email và kích hoạt tài khoản.",
+            otpCode
         );
 
         return Result<RegisterResponseDto>.Success(responseDto);
