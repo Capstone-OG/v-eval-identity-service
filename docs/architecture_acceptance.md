@@ -125,3 +125,4 @@
 | **3-Way Parent-Student Linking System (UC 41)** | `ParentLinkingFeatures.cs`, `UserRepository.cs`, `UsersController.cs` (`parent-link/connect`, `parent-link/request`, `me/parent-link-overview`) | **ĐẠT (100%)** |
 | **IAM Account Provisioning Email Validation & Null CampusId Defense** | `ProvisionUserCommand.cs`, `EmailValidationHelper.cs`, `Student.cs` (`CampusId` as `Guid?`), `IdentityGrpcService.cs` | **ĐẠT (100%)** |
 | **Soft Delete & Inactive User Lifecycle Management** | `GetUsersQuery.cs` (`isActive` filter, `ActiveCount`, `InactiveCount`), `UserRepository.cs`, `ToggleUserStatusCommand.cs` (`targetStatus`), `UsersController.cs` | **ĐẠT (100%)** |
+| **Kestrel ListenAnyIP Multi-Network & Production Docker Containerization** | `Program.cs` (`ListenAnyIP` 5155/5156), `Dockerfile` (`EXPOSE 5155 5156`), `docker-compose.yml` (Gateway & Practice gRPC mapping) | **ĐẠT (100%)** |
