@@ -12,11 +12,6 @@ public record UpdateProfileCommand : IRequest<Result<UserProfileDto>>
     public string FullName { get; init; } = string.Empty;
     public string Phone { get; init; } = string.Empty;
     public string? AvatarUrl { get; init; }
-    public Guid? CampusId { get; init; }
-    public int? TargetScore { get; init; }
-    public DateOnly? ExamDate { get; init; }
-    public double? StudyHoursDay { get; init; }
-    public string? SchoolName { get; init; }
 }
 
 public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>
@@ -30,14 +25,6 @@ public class UpdateProfileValidator : AbstractValidator<UpdateProfileCommand>
         RuleFor(x => x.Phone)
             .NotEmpty().WithMessage("Số điện thoại không được để trống.")
             .Matches(@"^(0|\+84)[35789][0-9]{8}$").WithMessage("Số điện thoại không hợp lệ (định dạng Việt Nam: 10 chữ số).");
-
-        RuleFor(x => x.TargetScore)
-            .InclusiveBetween(0, 990).When(x => x.TargetScore.HasValue)
-            .WithMessage("Điểm mục tiêu phải nằm trong khoảng từ 0 đến 990.");
-
-        RuleFor(x => x.StudyHoursDay)
-            .InclusiveBetween(0.1, 24.0).When(x => x.StudyHoursDay.HasValue)
-            .WithMessage("Thời gian học mỗi ngày phải từ 0.1 đến 24 giờ.");
     }
 }
 
@@ -45,18 +32,15 @@ public class UpdateProfileHandler : IRequestHandler<UpdateProfileCommand, Result
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IUserRepository _userRepository;
-    private readonly IStudentRepository _studentRepository;
     private readonly IUnitOfWork _unitOfWork;
 
     public UpdateProfileHandler(
         ICurrentUserService currentUserService,
         IUserRepository userRepository,
-        IStudentRepository studentRepository,
         IUnitOfWork unitOfWork)
     {
         _currentUserService = currentUserService;
         _userRepository = userRepository;
-        _studentRepository = studentRepository;
         _unitOfWork = unitOfWork;
     }
 
@@ -78,7 +62,7 @@ public class UpdateProfileHandler : IRequestHandler<UpdateProfileCommand, Result
                 Error.NotFound("User.NotFound", "Không tìm thấy thông tin người dùng."));
         }
 
-        // Cập nhật thông tin cơ bản
+        // Cập nhật thông tin tài khoản chung (áp dụng cho mọi Actor)
         user.FullName = request.FullName.Trim();
         user.Phone = request.Phone.Trim();
         if (request.AvatarUrl != null)
@@ -87,30 +71,6 @@ public class UpdateProfileHandler : IRequestHandler<UpdateProfileCommand, Result
         }
 
         _userRepository.Update(user);
-
-        // Cập nhật thông tin student nếu có
-        StudentProfileDto? studentProfileDto = null;
-        var student = await _studentRepository.GetByIdAsync(user.UserId, cancellationToken);
-        if (student != null)
-        {
-            if (request.CampusId.HasValue) student.CampusId = request.CampusId;
-            if (request.TargetScore.HasValue) student.TargetScore = request.TargetScore;
-            if (request.ExamDate.HasValue) student.ExamDate = request.ExamDate;
-            if (request.StudyHoursDay.HasValue) student.StudyHoursDay = request.StudyHoursDay;
-            if (request.SchoolName != null) student.SchoolName = request.SchoolName.Trim();
-
-            _studentRepository.Update(student);
-
-            studentProfileDto = new StudentProfileDto(
-                student.StudentId,
-                student.CampusId,
-                student.TargetScore,
-                student.ExamDate,
-                student.StudyHoursDay,
-                student.SchoolName
-            );
-        }
-
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var roles = user.UserRoles
@@ -126,8 +86,7 @@ public class UpdateProfileHandler : IRequestHandler<UpdateProfileCommand, Result
             user.AvatarUrl,
             user.IsActive,
             user.CreatedAt,
-            roles,
-            studentProfileDto
+            roles
         );
 
         return Result<UserProfileDto>.Success(updatedProfile);

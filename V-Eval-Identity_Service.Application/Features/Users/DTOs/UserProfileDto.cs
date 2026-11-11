@@ -17,6 +17,5 @@ public record UserProfileDto(
     string? AvatarUrl,
     bool IsActive,
     DateTime CreatedAt,
-    IReadOnlyList<string> Roles,
-    StudentProfileDto? StudentProfile
+    IReadOnlyList<string> Roles
 );

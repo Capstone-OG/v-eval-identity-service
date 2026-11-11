@@ -17,10 +17,82 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("v_eval_identity")
                 .HasAnnotation("ProductVersion", "9.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("Domain.Entities.Iam.Campus", b =>
+                {
+                    b.Property<Guid>("CampusId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("campus_id");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("address");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone");
+
+                    b.HasKey("CampusId");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Campuses", "v_eval_identity");
+
+                    b.HasData(
+                        new
+                        {
+                            CampusId = new Guid("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+                            Address = "Khu phố 6, Phường Linh Trung, TP. Thủ Đức, TP.HCM",
+                            Code = "CS_THU_DUC",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Cơ sở 1 - Khu đô thị ĐHQG-HCM, TP. Thủ Đức",
+                            Phone = "02837242160"
+                        },
+                        new
+                        {
+                            CampusId = new Guid("4ba85f64-5717-4562-b3fc-2c963f66afa7"),
+                            Address = "268 Lý Thường Kiệt, Phường 14, Quận 10, TP.HCM",
+                            Code = "CS_QUAN_10",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Name = "Cơ sở 2 - Quận 10, TP.HCM",
+                            Phone = "02838651670"
+                        });
+                });
 
             modelBuilder.Entity("Domain.Entities.Iam.OtpVerification", b =>
                 {
@@ -61,7 +133,7 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("otp_verifications", "iam");
+                    b.ToTable("OtpVerifications", "v_eval_identity");
                 });
 
             modelBuilder.Entity("Domain.Entities.Iam.RefreshToken", b =>
@@ -97,7 +169,7 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("refresh_tokens", "iam");
+                    b.ToTable("RefreshTokens", "v_eval_identity");
                 });
 
             modelBuilder.Entity("Domain.Entities.Iam.Role", b =>
@@ -118,7 +190,7 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
                     b.HasIndex("RoleName")
                         .IsUnique();
 
-                    b.ToTable("roles", "iam");
+                    b.ToTable("Roles", "v_eval_identity");
                 });
 
             modelBuilder.Entity("Domain.Entities.Iam.User", b =>
@@ -170,7 +242,7 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("users", "iam");
+                    b.ToTable("Users", "v_eval_identity");
                 });
 
             modelBuilder.Entity("Domain.Entities.Iam.UserRole", b =>
@@ -187,7 +259,106 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("user_roles", "iam");
+                    b.ToTable("UserRoles", "v_eval_identity");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.AcademicDirector", b =>
+                {
+                    b.Property<Guid>("DirectorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("director_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("DirectorId");
+
+                    b.ToTable("AcademicDirectors", "v_eval_identity");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.AcademicManager", b =>
+                {
+                    b.Property<Guid>("ManagerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("manager_id");
+
+                    b.Property<Guid>("CampusId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("campus_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("ManagerId");
+
+                    b.HasIndex("CampusId");
+
+                    b.ToTable("AcademicManagers", "v_eval_identity");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Administrator", b =>
+                {
+                    b.Property<Guid>("AdminId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("admin_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.HasKey("AdminId");
+
+                    b.ToTable("Administrators", "v_eval_identity");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Parent", b =>
+                {
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("PhoneWork")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone_work");
+
+                    b.HasKey("ParentId");
+
+                    b.ToTable("Parents", "v_eval_identity");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.ParentStudentRelation", b =>
+                {
+                    b.Property<Guid>("RelationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("relation_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("ParentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parent_id");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("student_id");
+
+                    b.HasKey("RelationId");
+
+                    b.HasIndex("ParentId");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("ParentStudentRelations", "v_eval_identity");
                 });
 
             modelBuilder.Entity("Domain.Entities.Profiles.Student", b =>
@@ -223,7 +394,39 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
 
                     b.HasKey("StudentId");
 
-                    b.ToTable("students", "profile");
+                    b.HasIndex("CampusId");
+
+                    b.ToTable("Students", "v_eval_identity");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Teacher", b =>
+                {
+                    b.Property<Guid>("TeacherId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("teacher_id");
+
+                    b.Property<string>("Bio")
+                        .HasColumnType("text")
+                        .HasColumnName("bio");
+
+                    b.Property<Guid>("CampusId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("campus_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Specialty")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("specialty");
+
+                    b.HasKey("TeacherId");
+
+                    b.HasIndex("CampusId");
+
+                    b.ToTable("Teachers", "v_eval_identity");
                 });
 
             modelBuilder.Entity("Domain.Entities.Iam.RefreshToken", b =>
@@ -256,11 +459,92 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Profiles.Student", b =>
+            modelBuilder.Entity("Domain.Entities.Profiles.AcademicDirector", b =>
                 {
                     b.HasOne("Domain.Entities.Iam.User", null)
                         .WithOne()
+                        .HasForeignKey("Domain.Entities.Profiles.AcademicDirector", "DirectorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.AcademicManager", b =>
+                {
+                    b.HasOne("Domain.Entities.Iam.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Iam.User", null)
+                        .WithOne()
+                        .HasForeignKey("Domain.Entities.Profiles.AcademicManager", "ManagerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Administrator", b =>
+                {
+                    b.HasOne("Domain.Entities.Iam.User", null)
+                        .WithOne()
+                        .HasForeignKey("Domain.Entities.Profiles.Administrator", "AdminId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Parent", b =>
+                {
+                    b.HasOne("Domain.Entities.Iam.User", null)
+                        .WithOne()
+                        .HasForeignKey("Domain.Entities.Profiles.Parent", "ParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.ParentStudentRelation", b =>
+                {
+                    b.HasOne("Domain.Entities.Profiles.Parent", "Parent")
+                        .WithMany("StudentRelations")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Profiles.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Parent");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Student", b =>
+                {
+                    b.HasOne("Domain.Entities.Iam.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.Iam.User", null)
+                        .WithOne()
                         .HasForeignKey("Domain.Entities.Profiles.Student", "StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Teacher", b =>
+                {
+                    b.HasOne("Domain.Entities.Iam.Campus", null)
+                        .WithMany()
+                        .HasForeignKey("CampusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Iam.User", null)
+                        .WithOne()
+                        .HasForeignKey("Domain.Entities.Profiles.Teacher", "TeacherId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -275,6 +559,11 @@ namespace V_Eval_Identity_Service.Infrastructure.Migrations
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Parent", b =>
+                {
+                    b.Navigation("StudentRelations");
                 });
 #pragma warning restore 612, 618
         }
