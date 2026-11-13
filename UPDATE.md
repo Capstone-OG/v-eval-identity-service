@@ -1,20 +1,19 @@
 # NHẬT KÝ CẬP NHẬT (UPDATE LOG) - IDENTITY SERVICE
 
-## [07/11/2026] - Phân Hệ Quản Lý Tài Khoản Ngừng Hoạt Động (Soft Delete / Inactive), Lọc Trạng Thái & Tích Hợp Kiểm Tra Email Đa Tầng Cấp Phát IAM
+## [11/11/2026] - Chuyển Nhánh Main, Chuẩn Hóa Cấu Hình Kestrel ListenAnyIP & Đóng Gói Docker Container Cho Hệ Thống V-Eval
 
-- **Phân Hệ Quản Lý Tài Khoản Ngừng Hoạt Động & Thống Kê Số Lượng Realtime ([`GetUsersQuery.cs`](./V-Eval-Identity_Service.Application/Features/Users/Queries/GetUsers/GetUsersQuery.cs), [`UserRepository.cs`](./V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/UserRepository.cs), [`UsersController.cs`](./V-Eval-Identity_Service.API/Controllers/UsersController.cs))**:
-  - Bổ sung bộ lọc `bool? isActive` vào lệnh `GetUsersQuery` và endpoint `GET /api/v1/users`, hỗ trợ lọc chính xác tài khoản đang hoạt động (`isActive = true`) hoặc tài khoản đã ngừng hoạt động/ẩn (`isActive = false`).
-  - Nâng cấp `PagedUsersResult` trả về đồng thời `ActiveCount` và `InactiveCount` theo thời gian thực từ bảng `v_eval_identity."Users"`.
-  - Nâng cấp `ToggleUserStatusCommand` (`PATCH /api/v1/users/{id}/toggle-status`) hỗ trợ tham số `targetStatus` tùy chọn, cho phép chủ động đặt trạng thái kích hoạt hoặc ngừng hoạt động có kiểm soát.
-  - Tuân thủ nghiêm ngặt nguyên tắc Soft Delete: Không bao giờ xóa cứng dữ liệu khỏi bảng `Users`, bảo toàn 100% lịch sử nộp bài thi, giao dịch học phí và liên kết phụ huynh.
-- **Tích Hợp Kiểm Tra Email Đa Tầng Vào Cấp Phát Tài Khoản ([`ProvisionUserCommand.cs`](./V-Eval-Identity_Service.Application/Features/Users/Commands/ProvisionUser/ProvisionUserCommand.cs))**:
-  - Tích hợp `EmailValidationHelper.ValidateEmailComprehensiveAsync` vào lệnh cấp phát tài khoản trực tiếp `ProvisionUserCommand`.
-  - Bổ sung phát hiện lỗi gõ nhầm tên miền `mail.com` thành `gmail.com` trong [`EmailValidationHelper.cs`](./V-Eval-Identity_Service.Application/Common/Validators/EmailValidationHelper.cs) (`CommonDomainTypos`).
-  - Chặn đứng các trường hợp nhập sai email, tên miền không có bản ghi DNS MX, dịch vụ email rác/ảo 10 phút và chuỗi ký tự lặp giả mạo (`22222`).
-- **Khắc Phục Lỗi Null `CampusId` Khi Tải Danh Sách Người Dùng ([`Student.cs`](./V-Eval-Identity_Service.Domain/Entities/Profiles/Student.cs), [`IdentityGrpcService.cs`](./V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
-  - Chuyển trường `CampusId` trong thực thể `Student` sang dạng nullable (`Guid?`) cho phép EF Core ánh xạ an toàn các bản ghi học sinh cũ chưa gán cơ sở.
-  - Cập nhật logic xử lý an toàn trong `IdentityGrpcService.cs`, loại bỏ hoàn toàn ngoại lệ `InvalidCastException: Column 'campus_id' is null` gây lỗi HTTP 500 khi gọi `GET /api/v1/users`.
-  - Cập nhật 5 bản ghi học sinh thiếu cơ sở trong CSDL PostgreSQL sang cơ sở mặc định `CS_THU_DUC` (`3fa85f64-5717-4562-b3fc-2c963f66afa6`).
-- **Kiểm Thử & Vận Hành**:
-  - Biên dịch .NET 9 SDK đạt chuẩn 100% sạch (0 Warning, 0 Error).
-  - Toàn bộ 5/5 kiểm thử xUnit đạt Passed 100%.
+- **Cấu Hình Kestrel Lắng Nghe Đa Giao Diện Mạng ([`Program.cs`](./V-Eval-Identity_Service.API/Program.cs))**:
+  - Chuyển đổi từ cấu hình `options.ListenLocalhost(...)` sang `options.ListenAnyIP(...)`:
+    - Cổng `5155`: Lắng nghe HTTP/1 phục vụ toàn bộ REST API điều phối người dùng, xác thực IAM, quản lý cơ sở và các endpoint chuyển trạng thái tài khoản.
+    - Cổng `5156`: Lắng nghe HTTP/2 phục vụ dịch vụ gRPC Server cho các microservice nội bộ (`IdentityGrpcService`).
+  - Cho phép Kestrel chấp nhận các kết nối liên container từ `veval_network` trong Docker Compose và kết nối từ bên ngoài máy chủ.
+
+- **Chuẩn Hóa Đóng Gói Docker Production ([`Dockerfile`](./Dockerfile), [`docker-compose.yml`](../../docker-compose.yml))**:
+  - Cập nhật chỉ thị `EXPOSE 5155 5156` và biến môi trường `ENV ASPNETCORE_URLS=http://+:5155;http://+:5156` trong Dockerfile.
+  - Cập nhật cấu hình Docker Compose ánh xạ hai cổng `5155:5155` và `5156:5156`, đồng bộ URL gRPC với Practice Service và URL REST với Gateway cluster.
+
+- **Kiểm Thử & Nghiệm Thu Trực Tuyến**:
+  - `dotnet build`: Biên dịch thành công 100% với .NET 9 SDK (0 Error, 0 Warning).
+  - Docker Image `capstone-v-eval-identity-service:latest` build thành công trong 117.9 giây.
+  - Container `v_eval_identity_service` khởi chạy ở trạng thái `Up`, phục vụ dữ liệu trực tiếp:
+    - Endpoint `https://api.pickic.io.vn/api/v1/campuses` phản hồi HTTP 200 kèm danh sách 2 cơ sở đào tạo chuẩn.
