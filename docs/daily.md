@@ -1,5 +1,20 @@
 # NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
 
+## [15/11/2026] - Khắc Phục Lỗi Xác Thực Brevo SMTP (535 Authentication Failed), Bỏ Toàn Bộ Hardcode Khóa SMTP & Đồng Bộ Volume Cấu Hình
+
+- **Loại Bỏ Hoàn Toàn Hardcode Khóa SMTP Trong [`BrevoSmtpEmailService.cs`](../V-Eval-Identity_Service.Infrastructure/Services/BrevoSmtpEmailService.cs) & [`appsettings.json`](../V-Eval-Identity_Service.API/appsettings.json)**:
+  - Xóa bỏ toàn bộ chuỗi Base64 fallback hardcoded trong mã nguồn C#.
+  - Dịch vụ email tự động đọc cấu hình theo thứ tự ưu tiên: `Email:SmtpPassword` trong cấu hình -> biến môi trường `BREVO_SMTP_KEY` -> biến môi trường `Email__SmtpPassword`. Nếu không được cấu hình, dịch vụ chuyển sang chế độ Mock mode an toàn và ghi log cảnh báo.
+  - Khôi phục giá trị an toàn `"SmtpPassword": "YOUR_BREVO_SMTP_KEY_OR_ENV_VAR"` trong `appsettings.json`.
+
+- **Đồng Bộ Cấu Hình Trực Tiếp Vào Container Docker ([`docker-compose.yml`](../../docker-compose.yml))**:
+  - Bổ sung volume mount `./All Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/appsettings.json:/app/appsettings.json:ro` và `env_file: .env` cho container `v_eval_identity_service`.
+  - Truyền biến môi trường `BREVO_SMTP_KEY` và `Email__SmtpPassword` từ file `.env` root vào container giúp nạp khóa SMTP tức thì khi khởi chạy container mà không cần rebuild Docker image.
+
+- **Kiểm Thử & Nghiệm Thu**:
+  - `dotnet build`: Biên dịch thành công 100% với .NET 9 SDK (`0 Error`).
+  - Docker Compose config và các route Gateway hoạt động ổn định.
+
 ## [11/11/2026] - Chuyển Toàn Bộ Nhánh Làm Việc Sang Main, Cấu Hình Kestrel ListenAnyIP & Đóng Gói Docker Container Cho Hệ Thống V-Eval
 
 - **Cấu Hình Kestrel Lắng Nghe Đa Giao Diện Mạng ([`Program.cs`](../V-Eval-Identity_Service.API/Program.cs))**:

@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
@@ -172,16 +172,6 @@ public sealed class BrevoSmtpEmailService : IEmailService
         {
             smtpPass = Environment.GetEnvironmentVariable("BREVO_SMTP_KEY")
                 ?? Environment.GetEnvironmentVariable("Email__SmtpPassword");
-
-            if (string.IsNullOrWhiteSpace(smtpPass))
-            {
-                try
-                {
-                    var b64 = "eHNtdHBzaWItMGVmYzQ3YjJkOGU1OTc5YWZlYTUwYzMzZjc0NDRlODhkNWJiNTc1ZTJmMTJkMWVjMTA2OTE4MGY5NmEwYTE0LUlGQ2hlRlpKajliYVJoUnY=";
-                    smtpPass = System.Text.Encoding.UTF8.GetString(System.Convert.FromBase64String(b64));
-                }
-                catch { }
-            }
         }
         var senderEmail = _configuration["Email:SenderEmail"] ?? "support@veval.edu.vn";
         var senderName = _configuration["Email:SenderName"] ?? "V-Eval Learning Platform";
