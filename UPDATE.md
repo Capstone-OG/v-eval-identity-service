@@ -1,19 +1,16 @@
 # NHẬT KÝ CẬP NHẬT (UPDATE LOG) - IDENTITY SERVICE
 
-## [11/11/2026] - Chuyển Nhánh Main, Chuẩn Hóa Cấu Hình Kestrel ListenAnyIP & Đóng Gói Docker Container Cho Hệ Thống V-Eval
+## [15/11/2026] - Khắc Phục Lỗi Xác Thực Brevo SMTP (535 Authentication Failed), Bỏ Toàn Bộ Hardcode Khóa SMTP & Đồng Bộ Volume Cấu Hình
 
-- **Cấu Hình Kestrel Lắng Nghe Đa Giao Diện Mạng ([`Program.cs`](./V-Eval-Identity_Service.API/Program.cs))**:
-  - Chuyển đổi từ cấu hình `options.ListenLocalhost(...)` sang `options.ListenAnyIP(...)`:
-    - Cổng `5155`: Lắng nghe HTTP/1 phục vụ toàn bộ REST API điều phối người dùng, xác thực IAM, quản lý cơ sở và các endpoint chuyển trạng thái tài khoản.
-    - Cổng `5156`: Lắng nghe HTTP/2 phục vụ dịch vụ gRPC Server cho các microservice nội bộ (`IdentityGrpcService`).
-  - Cho phép Kestrel chấp nhận các kết nối liên container từ `veval_network` trong Docker Compose và kết nối từ bên ngoài máy chủ.
+- **Loại Bỏ Hoàn Toàn Hardcode Khóa SMTP Trong [`BrevoSmtpEmailService.cs`](./V-Eval-Identity_Service.Infrastructure/Services/BrevoSmtpEmailService.cs) & [`appsettings.json`](./V-Eval-Identity_Service.API/appsettings.json)**:
+  - Xóa bỏ toàn bộ chuỗi Base64 fallback hardcoded trong mã nguồn C#.
+  - Dịch vụ email tự động đọc cấu hình theo thứ tự ưu tiên: `Email:SmtpPassword` trong cấu hình -> biến môi trường `BREVO_SMTP_KEY` -> biến môi trường `Email__SmtpPassword`. Nếu không được cấu hình, dịch vụ chuyển sang chế độ Mock mode an toàn và ghi log cảnh báo thay vì cố gửi với khóa mặc định.
+  - Khôi phục giá trị an toàn `"SmtpPassword": "YOUR_BREVO_SMTP_KEY_OR_ENV_VAR"` trong `appsettings.json` tránh để lộ khóa bảo mật trên git repository.
 
-- **Chuẩn Hóa Đóng Gói Docker Production ([`Dockerfile`](./Dockerfile), [`docker-compose.yml`](../../docker-compose.yml))**:
-  - Cập nhật chỉ thị `EXPOSE 5155 5156` và biến môi trường `ENV ASPNETCORE_URLS=http://+:5155;http://+:5156` trong Dockerfile.
-  - Cập nhật cấu hình Docker Compose ánh xạ hai cổng `5155:5155` và `5156:5156`, đồng bộ URL gRPC với Practice Service và URL REST với Gateway cluster.
+- **Đồng Bộ Cấu Hình Trực Tiếp Vào Container Docker ([`docker-compose.yml`](../../docker-compose.yml))**:
+  - Bổ sung volume mount `./All Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/appsettings.json:/app/appsettings.json:ro` và `env_file: .env` cho container `v_eval_identity_service`.
+  - Truyền biến môi trường `BREVO_SMTP_KEY` và `Email__SmtpPassword` trực tiếp từ file `.env` root vào container giúp nạp khóa SMTP tức thì khi khởi chạy container mà không cần rebuild Docker image.
 
-- **Kiểm Thử & Nghiệm Thu Trực Tuyến**:
-  - `dotnet build`: Biên dịch thành công 100% với .NET 9 SDK (0 Error, 0 Warning).
-  - Docker Image `capstone-v-eval-identity-service:latest` build thành công trong 117.9 giây.
-  - Container `v_eval_identity_service` khởi chạy ở trạng thái `Up`, phục vụ dữ liệu trực tiếp:
-    - Endpoint `https://api.pickic.io.vn/api/v1/campuses` phản hồi HTTP 200 kèm danh sách 2 cơ sở đào tạo chuẩn.
+- **Kiểm Thử & Nghiệm Thu**:
+  - `dotnet build`: Biên dịch thành công 100% với .NET 9 SDK (`0 Error`).
+  - Toàn bộ test case và cú pháp cấu hình docker-compose được xác thực hợp lệ.
