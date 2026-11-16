@@ -18,7 +18,7 @@ RUN dotnet publish "V-Eval-Identity_Service.API.csproj" -c Release -o /app/publi
 # Stage 2: ASP.NET Core Runtime Image
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
-EXPOSE 5001
-ENV ASPNETCORE_URLS=http://+:5001
+EXPOSE 5155 5156
+ENV ASPNETCORE_URLS=http://+:5155;http://+:5156
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "V-Eval-Identity_Service.API.dll"]
