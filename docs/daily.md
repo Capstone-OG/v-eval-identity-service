@@ -8,7 +8,7 @@
   - Mở rộng `StudentSummaryItem` trong phản hồi `GetParentStudentsResponse` bổ sung trường `school_name = 5;` và `target_score = 6;`.
   - Mở rộng `GetStudentSummaryResponse` bổ sung trường `school_name = 8;`.
 - **Hiện Thực Hóa gRPC Server ([`IdentityGrpcService.cs`](../V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
-  - Hiện thực phương thức `GetTeacherProfile`: truy vấn `_context.Users` và `_context.Teachers` theo `teacher_id`, trả về thông tin danh tính, số điện thoại liên hệ và chuyên môn của giảng viên.
+  - Hiện thực phương thức `GetTeacherProfile`: truy vấn `_context.Users` và `_context.Teachers` theo `teacher_id`, trả về thông tin danh tính, số điện thoại liên hệ và chuyên môn của giảng viên. Nếu không tìm thấy giáo viên trong CSDL, trả về `Exists = false`, triệt tiêu 100% dữ liệu fallback giả định.
   - Cập nhật phương thức `GetParentStudents`: điền dữ liệu trường học `student.SchoolName` và điểm mục tiêu `student.TargetScore` từ bảng `profile.students`.
   - Cập nhật phương thức `GetStudentProfileSummary`: điền `SchoolName` vào phản hồi hồ sơ học sinh.
 - **Kiểm Thử & Nghiệm Thu**:

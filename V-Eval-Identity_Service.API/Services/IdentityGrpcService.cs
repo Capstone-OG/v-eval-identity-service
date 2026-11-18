@@ -140,16 +140,7 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
 
         if (user == null && teacher == null)
         {
-            return new GetTeacherProfileResponse
-            {
-                Exists = true,
-                TeacherId = teacherGuid.ToString(),
-                FullName = "ThS. Nguyễn Minh Triết",
-                Phone = "0908 246 357",
-                Email = "triet.nguyen@veval.edu.vn",
-                Specialty = "Toán & Tư duy Định lượng",
-                CampusName = "Cơ sở 1 - TP. Hồ Chí Minh"
-            };
+            return new GetTeacherProfileResponse { Exists = false };
         }
 
         string campusName = string.Empty;
@@ -163,9 +154,9 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
         {
             Exists = true,
             TeacherId = teacherGuid.ToString(),
-            FullName = !string.IsNullOrWhiteSpace(user?.FullName) ? user.FullName : "ThS. Nguyễn Minh Triết",
-            Phone = !string.IsNullOrWhiteSpace(user?.Phone) ? user.Phone : "0908 246 357",
-            Email = user?.Email ?? "giaovien@veval.edu.vn",
+            FullName = user?.FullName ?? string.Empty,
+            Phone = user?.Phone ?? string.Empty,
+            Email = user?.Email ?? string.Empty,
             Specialty = teacher?.Specialty ?? "Cố vấn Sư phạm V-Eval",
             CampusName = campusName
         };
