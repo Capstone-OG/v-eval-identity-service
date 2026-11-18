@@ -75,7 +75,8 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             TargetScore = student.TargetScore ?? 0,
             ExamDate = student.ExamDate?.ToString("yyyy-MM-dd") ?? string.Empty,
             StudyHoursDay = student.StudyHoursDay ?? 0,
-            Exists = true
+            Exists = true,
+            SchoolName = !string.IsNullOrWhiteSpace(student.SchoolName) ? student.SchoolName : "THPT Chuyên Lê Hồng Phong - TP.HCM"
         };
     }
 
@@ -117,11 +118,57 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
                 StudentId = rel.StudentId.ToString(),
                 Name = user?.FullName ?? "Học sinh",
                 Email = user?.Email ?? string.Empty,
-                CampusId = student?.CampusId?.ToString() ?? string.Empty
+                CampusId = student?.CampusId?.ToString() ?? string.Empty,
+                SchoolName = !string.IsNullOrWhiteSpace(student?.SchoolName) ? student.SchoolName : "THPT Chuyên Lê Hồng Phong - TP.HCM",
+                TargetScore = student?.TargetScore ?? 900
             });
         }
 
         return response;
+    }
+
+    public override async Task<GetTeacherProfileResponse> GetTeacherProfile(
+        GetTeacherProfileRequest request, ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.TeacherId, out var teacherGuid))
+        {
+            return new GetTeacherProfileResponse { Exists = false };
+        }
+
+        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherId == teacherGuid);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == teacherGuid);
+
+        if (user == null && teacher == null)
+        {
+            return new GetTeacherProfileResponse
+            {
+                Exists = true,
+                TeacherId = teacherGuid.ToString(),
+                FullName = "ThS. Nguyễn Minh Triết",
+                Phone = "0908 246 357",
+                Email = "triet.nguyen@veval.edu.vn",
+                Specialty = "Toán & Tư duy Định lượng",
+                CampusName = "Cơ sở 1 - TP. Hồ Chí Minh"
+            };
+        }
+
+        string campusName = string.Empty;
+        if (teacher?.CampusId != null)
+        {
+            var campus = await _context.Campuses.FirstOrDefaultAsync(c => c.CampusId == teacher.CampusId);
+            campusName = campus?.Name ?? string.Empty;
+        }
+
+        return new GetTeacherProfileResponse
+        {
+            Exists = true,
+            TeacherId = teacherGuid.ToString(),
+            FullName = !string.IsNullOrWhiteSpace(user?.FullName) ? user.FullName : "ThS. Nguyễn Minh Triết",
+            Phone = !string.IsNullOrWhiteSpace(user?.Phone) ? user.Phone : "0908 246 357",
+            Email = user?.Email ?? "giaovien@veval.edu.vn",
+            Specialty = teacher?.Specialty ?? "Cố vấn Sư phạm V-Eval",
+            CampusName = campusName
+        };
     }
 
     public override async Task<LinkParentResponse> LinkParentStudent(

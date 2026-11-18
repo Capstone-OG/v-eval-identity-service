@@ -1,19 +1,16 @@
 # NHẬT KÝ CẬP NHẬT (UPDATE LOG) - IDENTITY SERVICE
 
-## [11/11/2026] - Chuyển Nhánh Main, Chuẩn Hóa Cấu Hình Kestrel ListenAnyIP & Đóng Gói Docker Container Cho Hệ Thống V-Eval
+## [18/11/2026] - Bổ Sung gRPC RPC `GetTeacherProfile` & Mở Rộng `GetParentStudents` Cho Identity Service
 
-- **Cấu Hình Kestrel Lắng Nghe Đa Giao Diện Mạng ([`Program.cs`](./V-Eval-Identity_Service.API/Program.cs))**:
-  - Chuyển đổi từ cấu hình `options.ListenLocalhost(...)` sang `options.ListenAnyIP(...)`:
-    - Cổng `5155`: Lắng nghe HTTP/1 phục vụ toàn bộ REST API điều phối người dùng, xác thực IAM, quản lý cơ sở và các endpoint chuyển trạng thái tài khoản.
-    - Cổng `5156`: Lắng nghe HTTP/2 phục vụ dịch vụ gRPC Server cho các microservice nội bộ (`IdentityGrpcService`).
-  - Cho phép Kestrel chấp nhận các kết nối liên container từ `veval_network` trong Docker Compose và kết nối từ bên ngoài máy chủ.
-
-- **Chuẩn Hóa Đóng Gói Docker Production ([`Dockerfile`](./Dockerfile), [`docker-compose.yml`](../../docker-compose.yml))**:
-  - Cập nhật chỉ thị `EXPOSE 5155 5156` và biến môi trường `ENV ASPNETCORE_URLS=http://+:5155;http://+:5156` trong Dockerfile.
-  - Cập nhật cấu hình Docker Compose ánh xạ hai cổng `5155:5155` và `5156:5156`, đồng bộ URL gRPC với Practice Service và URL REST với Gateway cluster.
-
-- **Kiểm Thử & Nghiệm Thu Trực Tuyến**:
-  - `dotnet build`: Biên dịch thành công 100% với .NET 9 SDK (0 Error, 0 Warning).
-  - Docker Image `capstone-v-eval-identity-service:latest` build thành công trong 117.9 giây.
-  - Container `v_eval_identity_service` khởi chạy ở trạng thái `Up`, phục vụ dữ liệu trực tiếp:
-    - Endpoint `https://api.pickic.io.vn/api/v1/campuses` phản hồi HTTP 200 kèm danh sách 2 cơ sở đào tạo chuẩn.
+- **Mở Rộng Hợp Đồng gRPC Protocol Buffers ([`identity.proto`](./V-Eval-Identity_Service.API/Protos/identity.proto))**:
+  - Bổ sung RPC mới: `rpc GetTeacherProfile (GetTeacherProfileRequest) returns (GetTeacherProfileResponse);`.
+  - Khai báo message `GetTeacherProfileRequest` (nhận `teacher_id`) và `GetTeacherProfileResponse` (trả về `exists`, `full_name`, `phone`, `email`, `specialty`).
+  - Mở rộng `StudentSummaryItem` trong phản hồi `GetParentStudentsResponse` bổ sung `school_name = 5;` và `target_score = 6;`.
+  - Mở rộng `GetStudentSummaryResponse` bổ sung `school_name = 8;`.
+- **Hiện Thực Hóa gRPC Server ([`IdentityGrpcService.cs`](./V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Triển khai phương thức `GetTeacherProfile`: truy vấn `_context.Users` và `_context.Teachers` theo `teacher_id`, trả về thông tin danh tính, số điện thoại liên hệ và chuyên môn của giảng viên.
+  - Cập nhật phương thức `GetParentStudents`: điền `student.SchoolName` và `student.TargetScore` từ bảng `profile.students`.
+  - Cập nhật phương thức `GetStudentProfileSummary`: điền `SchoolName` vào phản hồi hồ sơ học sinh.
+- **Kiểm Thử & Nghiệm Thu**:
+  - Biên dịch .NET 9 SDK đạt chuẩn sạch (0 Warning, 0 Error).
+  - Chạy `dotnet test`: Toàn bộ **5/5 tests Passed 100%**.
