@@ -44,6 +44,8 @@ public class GetCurrentUserHandler : IRequestHandler<GetCurrentUserQuery, Result
             .Select(ur => ur.Role.RoleName)
             .ToList();
 
+        var (campusId, campusName, _) = await _userRepository.GetUserCampusInfoAsync(user.UserId, cancellationToken);
+
         var profile = new UserProfileDto(
             user.UserId,
             user.Email,
@@ -52,7 +54,9 @@ public class GetCurrentUserHandler : IRequestHandler<GetCurrentUserQuery, Result
             user.AvatarUrl,
             user.IsActive,
             user.CreatedAt,
-            roles
+            roles,
+            campusId,
+            campusName
         );
 
         return Result<UserProfileDto>.Success(profile);

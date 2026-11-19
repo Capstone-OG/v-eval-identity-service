@@ -54,6 +54,7 @@ public interface IUserRepository : IGenericRepository<User>
     Task<User?> GetByEmailWithRolesAsync(string email, CancellationToken cancellationToken = default);
     Task<User?> GetByIdWithDetailsAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<bool> IsEmailUniqueAsync(string email, CancellationToken cancellationToken = default);
+    Task<(Guid? CampusId, string? CampusName, string? Specialty)> GetUserCampusInfoAsync(Guid userId, CancellationToken cancellationToken = default);
 
     Task<(IReadOnlyList<UserWithProfileInfo> Items, int TotalCount, int ActiveCount, int InactiveCount)> GetUsersPagedAsync(
         string? role = null,

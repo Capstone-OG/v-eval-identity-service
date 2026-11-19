@@ -25,6 +25,36 @@
   - Biên dịch .NET 9 SDK đạt chuẩn sạch (0 Warning, 0 Error).
   - Chạy `dotnet test`: Toàn bộ **5/5 tests Passed 100%**.
 
+## [19/11/2026] - Bổ Sung Trích Xuất Cơ Sở Phụ Trách (`CampusId`, `CampusName`) & Cung Cấp RPC Truy Vấn Tên Học Sinh Theo Batch Cho Practice Service
+
+- **Triển Khai RPC Truy Vấn Danh Sách Học Sinh Theo Batch Qua gRPC ([`identity.proto`](../V-Eval-Identity_Service.API/Protos/identity.proto), [`IdentityGrpcService.cs`](../V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Bổ sung RPC `rpc GetStudentsByIds (GetStudentsByIdsRequest) returns (GetStudentsByIdsResponse)` trong `identity.proto`.
+  - Trong `IdentityGrpcService.cs`, truy vấn trực tiếp bảng `iam.users` theo danh sách `student_ids` và trả về `FullName`, `Email`, `CampusId`, cho phép Practice Service đồng bộ tên học sinh thực tế thay vì hardcode.
+  - Bổ sung `string full_name = 8;` vào `GetStudentSummaryResponse`.
+- **Mở Rộng DTO Hồ Sơ Người Dùng & Phản Hồi Xác Thực ([`UserProfileDto.cs`](../V-Eval-Identity_Service.Application/Features/Users/DTOs/UserProfileDto.cs), [`AuthDtos.cs`](../V-Eval-Identity_Service.Application/Features/Auth/DTOs/AuthDtos.cs))**:
+  - Bổ sung trường `Guid? CampusId = null` và `string? CampusName = null` vào `UserProfileDto` (phục vụ `GET /api/v1/users/me`) và `UserDto` (phục vụ `POST /api/auth/login`, `POST /api/auth/refresh-token`).
+- **Triển Khai Truy Vấn Cơ Sở Phụ Trách Trong Repository ([`IUserRepository.cs`](../V-Eval-Identity_Service.Application/Common/Interfaces/Repositories/IUserRepository.cs), [`UserRepository.cs`](../V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/UserRepository.cs))**:
+  - Bổ sung phương thức `GetUserCampusInfoAsync(Guid userId, CancellationToken cancellationToken)` tự động tra cứu cơ sở trực thuộc từ các bảng profile: `iam.academic_managers`, `iam.teachers`, và `iam.students`, kèm tra cứu tên cơ sở `CampusName` từ bảng `iam.campuses`.
+- **Đồng Bộ Dữ Liệu Trong Handler ([`GetCurrentUserQuery.cs`](../V-Eval-Identity_Service.Application/Features/Users/Queries/GetCurrentUser/GetCurrentUserQuery.cs), [`LoginCommand.cs`](../V-Eval-Identity_Service.Application/Features/Auth/Commands/Login/LoginCommand.cs), [`RefreshTokenCommand.cs`](../V-Eval-Identity_Service.Application/Features/Auth/Commands/RefreshToken/RefreshTokenCommand.cs))**:
+  - Nạp đầy đủ `CampusId` và `CampusName` ngay khi người dùng đăng nhập hoặc tải lại thông tin cá nhân `users/me`.
+- **Kiểm Thử & Nghiệm Thu**:
+  - `dotnet build`: Biên dịch thành công 100% trên toàn bộ solution `V-Eval-Identity_Service` với .NET 9 SDK (`0 Warning(s), 0 Error(s)`).
+
+## [15/11/2026] - Khắc Phục Lỗi Xác Thực Brevo SMTP (535 Authentication Failed), Bỏ Toàn Bộ Hardcode Khóa SMTP & Đồng Bộ Volume Cấu Hình
+
+- **Loại Bỏ Hoàn Toàn Hardcode Khóa SMTP Trong [`BrevoSmtpEmailService.cs`](../V-Eval-Identity_Service.Infrastructure/Services/BrevoSmtpEmailService.cs) & [`appsettings.json`](../V-Eval-Identity_Service.API/appsettings.json)**:
+  - Xóa bỏ toàn bộ chuỗi Base64 fallback hardcoded trong mã nguồn C#.
+  - Dịch vụ email tự động đọc cấu hình theo thứ tự ưu tiên: `Email:SmtpPassword` trong cấu hình -> biến môi trường `BREVO_SMTP_KEY` -> biến môi trường `Email__SmtpPassword`. Nếu không được cấu hình, dịch vụ chuyển sang chế độ Mock mode an toàn và ghi log cảnh báo.
+  - Khôi phục giá trị an toàn `"SmtpPassword": "YOUR_BREVO_SMTP_KEY_OR_ENV_VAR"` trong `appsettings.json`.
+
+- **Đồng Bộ Cấu Hình Trực Tiếp Vào Container Docker ([`docker-compose.yml`](../../docker-compose.yml))**:
+  - Bổ sung volume mount `./All Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/appsettings.json:/app/appsettings.json:ro` và `env_file: .env` cho container `v_eval_identity_service`.
+  - Truyền biến môi trường `BREVO_SMTP_KEY` và `Email__SmtpPassword` từ file `.env` root vào container giúp nạp khóa SMTP tức thì khi khởi chạy container mà không cần rebuild Docker image.
+
+- **Kiểm Thử & Nghiệm Thu**:
+  - `dotnet build`: Biên dịch thành công 100% với .NET 9 SDK (`0 Error`).
+  - Docker Compose config và các route Gateway hoạt động ổn định.
+
 ## [11/11/2026] - Chuyển Toàn Bộ Nhánh Làm Việc Sang Main, Cấu Hình Kestrel ListenAnyIP & Đóng Gói Docker Container Cho Hệ Thống V-Eval
 
 - **Cấu Hình Kestrel Lắng Nghe Đa Giao Diện Mạng ([`Program.cs`](../V-Eval-Identity_Service.API/Program.cs))**:
