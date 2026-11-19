@@ -1,5 +1,45 @@
 # NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
 
+## [19/11/2026] - Chuẩn Hóa Phân Giải Thực Thể Động & Dữ Liệu Thực Tế Trong Identity gRPC Service
+
+- **Chuẩn Hóa Phân Giải Dữ Liệu Học Sinh & Giáo Viên ([`IdentityGrpcService.cs`](../V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Trích xuất 100% dữ liệu thực tế từ các bảng `v_eval_identity.Students`, `Users` và `Teachers`.
+  - Trong `GetStudentProfileSummary` và `GetParentStudents`: Trả về đúng trường THPT (`SchoolName`) và điểm mục tiêu (`TargetScore`) thực tế từ CSDL; nếu trường dữ liệu chưa được cập nhật, trả về giá trị rỗng/mặc định số học thay vì gán tên trường cố định.
+  - Trong `GetTeacherProfile`: Trả về chính xác thông tin chuyên môn (`Specialty`) từ hồ sơ giảng viên thật hoặc chuỗi rỗng khi chưa khai báo.
+- **Kiểm Thử & Nghiệm Thu**:
+  - `dotnet build`: Hoàn thành thành công, 0 lỗi, 0 cảnh báo.
+  - `dotnet test`: Toàn bộ **5/5 unit tests Passed 100%**.
+
+## [18/11/2026] - Bổ Sung gRPC RPC `GetTeacherProfile` & Mở Rộng `GetParentStudents` Cho Identity Service
+
+- **Mở Rộng Hợp Đồng gRPC Protocol Buffers ([`identity.proto`](../V-Eval-Identity_Service.API/Protos/identity.proto))**:
+  - Bổ sung RPC mới: `rpc GetTeacherProfile (GetTeacherProfileRequest) returns (GetTeacherProfileResponse);`.
+  - Khai báo message `GetTeacherProfileRequest` (nhận `teacher_id`) và `GetTeacherProfileResponse` (trả về `exists`, `full_name`, `phone`, `email`, `specialty`).
+  - Mở rộng `StudentSummaryItem` trong phản hồi `GetParentStudentsResponse` bổ sung trường `school_name = 5;` và `target_score = 6;`.
+  - Mở rộng `GetStudentSummaryResponse` bổ sung trường `school_name = 8;`.
+- **Hiện Thực Hóa gRPC Server ([`IdentityGrpcService.cs`](../V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Hiện thực phương thức `GetTeacherProfile`: truy vấn `_context.Users` và `_context.Teachers` theo `teacher_id`, trả về thông tin danh tính, số điện thoại liên hệ và chuyên môn của giảng viên. Nếu không tìm thấy giáo viên trong CSDL, trả về `Exists = false`, triệt tiêu 100% dữ liệu fallback giả định.
+  - Cập nhật phương thức `GetParentStudents`: điền dữ liệu trường học `student.SchoolName` và điểm mục tiêu `student.TargetScore` từ bảng `profile.students`.
+  - Cập nhật phương thức `GetStudentProfileSummary`: điền `SchoolName` vào phản hồi hồ sơ học sinh.
+- **Kiểm Thử & Nghiệm Thu**:
+  - Biên dịch .NET 9 SDK đạt chuẩn sạch (0 Warning, 0 Error).
+  - Chạy `dotnet test`: Toàn bộ **5/5 tests Passed 100%**.
+
+## [19/11/2026] - Bổ Sung Trích Xuất Cơ Sở Phụ Trách (`CampusId`, `CampusName`) & Cung Cấp RPC Truy Vấn Tên Học Sinh Theo Batch Cho Practice Service
+
+- **Triển Khai RPC Truy Vấn Danh Sách Học Sinh Theo Batch Qua gRPC ([`identity.proto`](../V-Eval-Identity_Service.API/Protos/identity.proto), [`IdentityGrpcService.cs`](../V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Bổ sung RPC `rpc GetStudentsByIds (GetStudentsByIdsRequest) returns (GetStudentsByIdsResponse)` trong `identity.proto`.
+  - Trong `IdentityGrpcService.cs`, truy vấn trực tiếp bảng `iam.users` theo danh sách `student_ids` và trả về `FullName`, `Email`, `CampusId`, cho phép Practice Service đồng bộ tên học sinh thực tế thay vì hardcode.
+  - Bổ sung `string full_name = 8;` vào `GetStudentSummaryResponse`.
+- **Mở Rộng DTO Hồ Sơ Người Dùng & Phản Hồi Xác Thực ([`UserProfileDto.cs`](../V-Eval-Identity_Service.Application/Features/Users/DTOs/UserProfileDto.cs), [`AuthDtos.cs`](../V-Eval-Identity_Service.Application/Features/Auth/DTOs/AuthDtos.cs))**:
+  - Bổ sung trường `Guid? CampusId = null` và `string? CampusName = null` vào `UserProfileDto` (phục vụ `GET /api/v1/users/me`) và `UserDto` (phục vụ `POST /api/auth/login`, `POST /api/auth/refresh-token`).
+- **Triển Khai Truy Vấn Cơ Sở Phụ Trách Trong Repository ([`IUserRepository.cs`](../V-Eval-Identity_Service.Application/Common/Interfaces/Repositories/IUserRepository.cs), [`UserRepository.cs`](../V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/UserRepository.cs))**:
+  - Bổ sung phương thức `GetUserCampusInfoAsync(Guid userId, CancellationToken cancellationToken)` tự động tra cứu cơ sở trực thuộc từ các bảng profile: `iam.academic_managers`, `iam.teachers`, và `iam.students`, kèm tra cứu tên cơ sở `CampusName` từ bảng `iam.campuses`.
+- **Đồng Bộ Dữ Liệu Trong Handler ([`GetCurrentUserQuery.cs`](../V-Eval-Identity_Service.Application/Features/Users/Queries/GetCurrentUser/GetCurrentUserQuery.cs), [`LoginCommand.cs`](../V-Eval-Identity_Service.Application/Features/Auth/Commands/Login/LoginCommand.cs), [`RefreshTokenCommand.cs`](../V-Eval-Identity_Service.Application/Features/Auth/Commands/RefreshToken/RefreshTokenCommand.cs))**:
+  - Nạp đầy đủ `CampusId` và `CampusName` ngay khi người dùng đăng nhập hoặc tải lại thông tin cá nhân `users/me`.
+- **Kiểm Thử & Nghiệm Thu**:
+  - `dotnet build`: Biên dịch thành công 100% trên toàn bộ solution `V-Eval-Identity_Service` với .NET 9 SDK (`0 Warning(s), 0 Error(s)`).
+
 ## [15/11/2026] - Khắc Phục Lỗi Xác Thực Brevo SMTP (535 Authentication Failed), Bỏ Toàn Bộ Hardcode Khóa SMTP & Đồng Bộ Volume Cấu Hình
 
 - **Loại Bỏ Hoàn Toàn Hardcode Khóa SMTP Trong [`BrevoSmtpEmailService.cs`](../V-Eval-Identity_Service.Infrastructure/Services/BrevoSmtpEmailService.cs) & [`appsettings.json`](../V-Eval-Identity_Service.API/appsettings.json)**:

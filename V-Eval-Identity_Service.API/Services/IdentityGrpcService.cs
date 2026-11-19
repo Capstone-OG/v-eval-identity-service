@@ -67,6 +67,9 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             : null;
         string campusName = campus?.Name ?? string.Empty;
 
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == studentGuid);
+        string fullName = user?.FullName ?? string.Empty;
+
         return new GetStudentSummaryResponse
         {
             StudentId = student.StudentId.ToString(),
@@ -75,8 +78,52 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             TargetScore = student.TargetScore ?? 0,
             ExamDate = student.ExamDate?.ToString("yyyy-MM-dd") ?? string.Empty,
             StudyHoursDay = student.StudyHoursDay ?? 0,
-            Exists = true
+            Exists = true,
+            SchoolName = !string.IsNullOrWhiteSpace(student.SchoolName) ? student.SchoolName : string.Empty,
+            FullName = fullName
         };
+    }
+
+    public override async Task<GetStudentsByIdsResponse> GetStudentsByIds(
+        GetStudentsByIdsRequest request, ServerCallContext context)
+    {
+        var response = new GetStudentsByIdsResponse();
+        var guids = request.StudentIds
+            .Select(id => Guid.TryParse(id, out var g) ? g : Guid.Empty)
+            .Where(g => g != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (!guids.Any())
+        {
+            return response;
+        }
+
+        var users = await _context.Users
+            .Where(u => guids.Contains(u.UserId))
+            .ToListAsync();
+
+        var students = await _context.Students
+            .Where(s => guids.Contains(s.StudentId))
+            .ToListAsync();
+
+        foreach (var guid in guids)
+        {
+            var user = users.FirstOrDefault(u => u.UserId == guid);
+            var student = students.FirstOrDefault(s => s.StudentId == guid);
+            if (user != null)
+            {
+                response.Students.Add(new StudentSummaryItem
+                {
+                    StudentId = guid.ToString(),
+                    Name = user.FullName,
+                    Email = user.Email,
+                    CampusId = student?.CampusId?.ToString() ?? string.Empty
+                });
+            }
+        }
+
+        return response;
     }
 
     public override async Task<GetParentStudentsResponse> GetParentStudents(
@@ -115,13 +162,50 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             response.Students.Add(new StudentSummaryItem
             {
                 StudentId = rel.StudentId.ToString(),
-                Name = user?.FullName ?? "Học sinh",
+                Name = !string.IsNullOrWhiteSpace(user?.FullName) ? user.FullName : "Học sinh",
                 Email = user?.Email ?? string.Empty,
-                CampusId = student?.CampusId?.ToString() ?? string.Empty
+                CampusId = student?.CampusId?.ToString() ?? string.Empty,
+                SchoolName = !string.IsNullOrWhiteSpace(student?.SchoolName) ? student.SchoolName : string.Empty,
+                TargetScore = student?.TargetScore ?? 0
             });
         }
 
         return response;
+    }
+
+    public override async Task<GetTeacherProfileResponse> GetTeacherProfile(
+        GetTeacherProfileRequest request, ServerCallContext context)
+    {
+        if (!Guid.TryParse(request.TeacherId, out var teacherGuid))
+        {
+            return new GetTeacherProfileResponse { Exists = false };
+        }
+
+        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherId == teacherGuid);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == teacherGuid);
+
+        if (user == null && teacher == null)
+        {
+            return new GetTeacherProfileResponse { Exists = false };
+        }
+
+        string campusName = string.Empty;
+        if (teacher?.CampusId != null)
+        {
+            var campus = await _context.Campuses.FirstOrDefaultAsync(c => c.CampusId == teacher.CampusId);
+            campusName = campus?.Name ?? string.Empty;
+        }
+
+        return new GetTeacherProfileResponse
+        {
+            Exists = true,
+            TeacherId = teacherGuid.ToString(),
+            FullName = user?.FullName ?? string.Empty,
+            Phone = user?.Phone ?? string.Empty,
+            Email = user?.Email ?? string.Empty,
+            Specialty = !string.IsNullOrWhiteSpace(teacher?.Specialty) ? teacher.Specialty : string.Empty,
+            CampusName = campusName
+        };
     }
 
     public override async Task<LinkParentResponse> LinkParentStudent(

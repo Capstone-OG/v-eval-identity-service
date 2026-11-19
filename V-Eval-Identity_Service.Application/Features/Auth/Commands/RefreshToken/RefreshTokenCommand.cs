@@ -80,7 +80,8 @@ public class RefreshTokenHandler : IRequestHandler<RefreshTokenCommand, Result<A
         await _refreshTokenRepository.AddAsync(newRefreshToken, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var userDto = new UserDto(user.UserId, user.Email, user.FullName, user.Phone, user.AvatarUrl, roles);
+        var (campusId, campusName, _) = await _userRepository.GetUserCampusInfoAsync(user.UserId, cancellationToken);
+        var userDto = new UserDto(user.UserId, user.Email, user.FullName, user.Phone, user.AvatarUrl, roles, campusId, campusName);
         return Result<AuthResponseDto>.Success(new AuthResponseDto(newAccessToken, newRefreshTokenString, userDto));
     }
 }

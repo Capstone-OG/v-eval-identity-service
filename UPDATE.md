@@ -1,16 +1,19 @@
 # NHẬT KÝ CẬP NHẬT (UPDATE LOG) - IDENTITY SERVICE
 
-## [15/11/2026] - Khắc Phục Lỗi Xác Thực Brevo SMTP (535 Authentication Failed), Bỏ Toàn Bộ Hardcode Khóa SMTP & Đồng Bộ Volume Cấu Hình
+## [19/11/2026] - Chuẩn Hóa Phân Giải Thực Thể Động, Trích Xuất Cơ Sở Phụ Trách & Cung Cấp RPC Truy Vấn Tên Học Sinh
 
-- **Loại Bỏ Hoàn Toàn Hardcode Khóa SMTP Trong [`BrevoSmtpEmailService.cs`](./V-Eval-Identity_Service.Infrastructure/Services/BrevoSmtpEmailService.cs) & [`appsettings.json`](./V-Eval-Identity_Service.API/appsettings.json)**:
-  - Xóa bỏ toàn bộ chuỗi Base64 fallback hardcoded trong mã nguồn C#.
-  - Dịch vụ email tự động đọc cấu hình theo thứ tự ưu tiên: `Email:SmtpPassword` trong cấu hình -> biến môi trường `BREVO_SMTP_KEY` -> biến môi trường `Email__SmtpPassword`. Nếu không được cấu hình, dịch vụ chuyển sang chế độ Mock mode an toàn và ghi log cảnh báo thay vì cố gửi với khóa mặc định.
-  - Khôi phục giá trị an toàn `"SmtpPassword": "YOUR_BREVO_SMTP_KEY_OR_ENV_VAR"` trong `appsettings.json` tránh để lộ khóa bảo mật trên git repository.
-
-- **Đồng Bộ Cấu Hình Trực Tiếp Vào Container Docker ([`docker-compose.yml`](../../docker-compose.yml))**:
-  - Bổ sung volume mount `./All Services/V-Eval-Identity_Service/V-Eval-Identity_Service.API/appsettings.json:/app/appsettings.json:ro` và `env_file: .env` cho container `v_eval_identity_service`.
-  - Truyền biến môi trường `BREVO_SMTP_KEY` và `Email__SmtpPassword` trực tiếp từ file `.env` root vào container giúp nạp khóa SMTP tức thì khi khởi chạy container mà không cần rebuild Docker image.
-
+- **Chuẩn Hóa Phân Giải Dữ Liệu Học Sinh & Giáo Viên ([`IdentityGrpcService.cs`](./V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Trích xuất 100% dữ liệu thực tế từ các bảng `v_eval_identity.Students`, `Users` và `Teachers`.
+  - Trong `GetStudentProfileSummary` và `GetParentStudents`: Trả về đúng trường THPT (`SchoolName`) và điểm mục tiêu (`TargetScore`) thực tế từ CSDL.
+  - Trong `GetTeacherProfile`: Trả về chính xác thông tin chuyên môn (`Specialty`) từ hồ sơ giảng viên thật hoặc chuỗi rỗng khi chưa khai báo.
+- **Triển Khai RPC Truy Vấn Danh Sách Học Sinh Theo Batch Qua gRPC ([`identity.proto`](./V-Eval-Identity_Service.API/Protos/identity.proto), [`IdentityGrpcService.cs`](./V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
+  - Bổ sung RPC `rpc GetStudentsByIds (GetStudentsByIdsRequest) returns (GetStudentsByIdsResponse)` trong `identity.proto`.
+  - Trong `IdentityGrpcService.cs`, truy vấn trực tiếp bảng `iam.users` theo danh sách `student_ids` và trả về `FullName`, `Email`, `CampusId`, cho phép Practice Service đồng bộ tên học sinh thực tế.
+  - Bổ sung `string full_name = 9;` vào `GetStudentSummaryResponse`.
+- **Mở Rộng DTO Hồ Sơ Người Dùng & Phản Hồi Xác Thực ([`UserProfileDto.cs`](./V-Eval-Identity_Service.Application/Features/Users/DTOs/UserProfileDto.cs), [`AuthDtos.cs`](./V-Eval-Identity_Service.Application/Features/Auth/DTOs/AuthDtos.cs))**:
+  - Bổ sung trường `Guid? CampusId = null` và `string? CampusName = null` vào `UserProfileDto` (phục vụ `GET /api/v1/users/me`) và `UserDto` (phục vụ `POST /api/auth/login`, `POST /api/auth/refresh-token`).
+- **Triển Khai Truy Vấn Cơ Sở Phụ Trách Trong Repository ([`IUserRepository.cs`](./V-Eval-Identity_Service.Application/Common/Interfaces/Repositories/IUserRepository.cs), [`UserRepository.cs`](./V-Eval-Identity_Service.Infrastructure/Persistence/Repositories/UserRepository.cs))**:
+  - Bổ sung phương thức `GetUserCampusInfoAsync(Guid userId, CancellationToken cancellationToken)` tự động tra cứu cơ sở trực thuộc từ các bảng profile: `iam.academic_managers`, `iam.teachers`, và `iam.students`, kèm tra cứu tên cơ sở `CampusName` từ bảng `iam.campuses`.
 - **Kiểm Thử & Nghiệm Thu**:
-  - `dotnet build`: Biên dịch thành công 100% với .NET 9 SDK (`0 Error`).
-  - Toàn bộ test case và cú pháp cấu hình docker-compose được xác thực hợp lệ.
+  - `dotnet build`: Hoàn thành thành công, 0 lỗi, 0 cảnh báo.
+  - `dotnet test`: Toàn bộ **5/5 unit tests Passed 100%**.

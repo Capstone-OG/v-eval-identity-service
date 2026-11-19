@@ -127,6 +127,46 @@ public class UserRepository : GenericRepository<User>, IUserRepository
         return (items, totalCount, activeCount, inactiveCount);
     }
 
+    public async Task<(Guid? CampusId, string? CampusName, string? Specialty)> GetUserCampusInfoAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        Guid? campusId = null;
+        string? specialty = null;
+
+        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.TeacherId == userId, cancellationToken);
+        if (teacher != null)
+        {
+            campusId = teacher.CampusId;
+            specialty = teacher.Specialty;
+        }
+        else
+        {
+            var manager = await _context.AcademicManagers.FirstOrDefaultAsync(m => m.ManagerId == userId, cancellationToken);
+            if (manager != null)
+            {
+                campusId = manager.CampusId;
+            }
+            else
+            {
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.StudentId == userId, cancellationToken);
+                if (student != null)
+                {
+                    campusId = student.CampusId;
+                }
+            }
+        }
+
+        string? campusName = null;
+        if (campusId.HasValue && campusId.Value != Guid.Empty)
+        {
+            var campus = await _context.Campuses.FirstOrDefaultAsync(c => c.CampusId == campusId.Value, cancellationToken);
+            campusName = campus?.Name;
+        }
+
+        return (campusId, campusName, specialty);
+    }
+
     public async Task AddTeacherProfileAsync(Guid teacherId, Guid campusId, string specialty, CancellationToken cancellationToken = default)
     {
         await _context.Teachers.AddAsync(new Teacher
