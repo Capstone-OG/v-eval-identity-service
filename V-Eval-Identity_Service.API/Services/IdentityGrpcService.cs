@@ -76,7 +76,7 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             ExamDate = student.ExamDate?.ToString("yyyy-MM-dd") ?? string.Empty,
             StudyHoursDay = student.StudyHoursDay ?? 0,
             Exists = true,
-            SchoolName = !string.IsNullOrWhiteSpace(student.SchoolName) ? student.SchoolName : "THPT Chuyên Lê Hồng Phong - TP.HCM"
+            SchoolName = !string.IsNullOrWhiteSpace(student.SchoolName) ? student.SchoolName : string.Empty
         };
     }
 
@@ -116,11 +116,11 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             response.Students.Add(new StudentSummaryItem
             {
                 StudentId = rel.StudentId.ToString(),
-                Name = user?.FullName ?? "Học sinh",
+                Name = !string.IsNullOrWhiteSpace(user?.FullName) ? user.FullName : "Học sinh",
                 Email = user?.Email ?? string.Empty,
                 CampusId = student?.CampusId?.ToString() ?? string.Empty,
-                SchoolName = !string.IsNullOrWhiteSpace(student?.SchoolName) ? student.SchoolName : "THPT Chuyên Lê Hồng Phong - TP.HCM",
-                TargetScore = student?.TargetScore ?? 900
+                SchoolName = !string.IsNullOrWhiteSpace(student?.SchoolName) ? student.SchoolName : string.Empty,
+                TargetScore = student?.TargetScore ?? 0
             });
         }
 
@@ -157,7 +157,7 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             FullName = user?.FullName ?? string.Empty,
             Phone = user?.Phone ?? string.Empty,
             Email = user?.Email ?? string.Empty,
-            Specialty = teacher?.Specialty ?? "Cố vấn Sư phạm V-Eval",
+            Specialty = !string.IsNullOrWhiteSpace(teacher?.Specialty) ? teacher.Specialty : string.Empty,
             CampusName = campusName
         };
     }
