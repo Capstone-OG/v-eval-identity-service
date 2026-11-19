@@ -6,7 +6,9 @@ public record UserDto(
     string FullName,
     string Phone,
     string? AvatarUrl,
-    IReadOnlyList<string> Roles
+    IReadOnlyList<string> Roles,
+    Guid? CampusId = null,
+    string? CampusName = null
 );
 
 public record AuthResponseDto(

@@ -93,13 +93,16 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<AuthResponseDto
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // 6. Trả về kết quả
+        var (campusId, campusName, _) = await _userRepository.GetUserCampusInfoAsync(user.UserId, cancellationToken);
         var userDto = new UserDto(
             user.UserId,
             user.Email,
             user.FullName,
             user.Phone,
             user.AvatarUrl,
-            roles
+            roles,
+            campusId,
+            campusName
         );
 
         return Result<AuthResponseDto>.Success(new AuthResponseDto(accessToken, refreshTokenString, userDto));

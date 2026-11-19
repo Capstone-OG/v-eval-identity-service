@@ -67,6 +67,9 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             : null;
         string campusName = campus?.Name ?? string.Empty;
 
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == studentGuid);
+        string fullName = user?.FullName ?? string.Empty;
+
         return new GetStudentSummaryResponse
         {
             StudentId = student.StudentId.ToString(),
@@ -75,8 +78,51 @@ public class IdentityGrpcService : IdentityGrpc.IdentityGrpcBase
             TargetScore = student.TargetScore ?? 0,
             ExamDate = student.ExamDate?.ToString("yyyy-MM-dd") ?? string.Empty,
             StudyHoursDay = student.StudyHoursDay ?? 0,
-            Exists = true
+            Exists = true,
+            FullName = fullName
         };
+    }
+
+    public override async Task<GetStudentsByIdsResponse> GetStudentsByIds(
+        GetStudentsByIdsRequest request, ServerCallContext context)
+    {
+        var response = new GetStudentsByIdsResponse();
+        var guids = request.StudentIds
+            .Select(id => Guid.TryParse(id, out var g) ? g : Guid.Empty)
+            .Where(g => g != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (!guids.Any())
+        {
+            return response;
+        }
+
+        var users = await _context.Users
+            .Where(u => guids.Contains(u.UserId))
+            .ToListAsync();
+
+        var students = await _context.Students
+            .Where(s => guids.Contains(s.StudentId))
+            .ToListAsync();
+
+        foreach (var guid in guids)
+        {
+            var user = users.FirstOrDefault(u => u.UserId == guid);
+            var student = students.FirstOrDefault(s => s.StudentId == guid);
+            if (user != null)
+            {
+                response.Students.Add(new StudentSummaryItem
+                {
+                    StudentId = guid.ToString(),
+                    Name = user.FullName,
+                    Email = user.Email,
+                    CampusId = student?.CampusId?.ToString() ?? string.Empty
+                });
+            }
+        }
+
+        return response;
     }
 
     public override async Task<GetParentStudentsResponse> GetParentStudents(
