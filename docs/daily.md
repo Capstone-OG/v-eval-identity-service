@@ -94,6 +94,12 @@
 
 ---
 
+## [23/11/2026]
+- **Tích Hợp Continuous Deployment (Auto-CD) Lên Máy Chủ Ubuntu Docker Server (`veval.io.vn`)**:
+  - Bổ sung file workflow [`.github/workflows/cd-main.yml`](../.github/workflows/cd-main.yml) kích hoạt tự động mỗi khi merge PR vào nhánh `main`.
+  - Thiết lập 2 stage: `ci-verify` (GitHub Cloud Runner) và `deploy-ubuntu` (Self-Hosted Runner mang nhãn `[self-hosted, veval-prod]`) gọi `/data/Capstone/Scripts/deploy_service.sh identity`.
+  - Vận hành cơ chế rebuild độc lập (`--no-deps`), đảm bảo Zero-Downtime, bảo vệ `veval-tunnel` và tự động thu hồi tài nguyên với `docker image prune -f`.
+
 - **Triển Khai Bộ Kiểm Tra Email Đa Tầng (`EmailValidationHelper.cs`)**:
   - Kiểm tra cú pháp chuẩn RFC 5322, cấu trúc TLD quốc tế và quy tắc riêng của Google Gmail (6–30 ký tự, chỉ chữ cái/chữ số/dấu chấm, không chỉ bao gồm toàn chữ số).
   - Phát hiện các lỗi gõ sai tên miền phổ biến (`gmial.com`, `gamil.com`, `gmail.con`, `yaho.com`, `hotmial.com`, `outlok.com`, `fpt.edu.v`...) kèm gợi ý sửa chính xác.
