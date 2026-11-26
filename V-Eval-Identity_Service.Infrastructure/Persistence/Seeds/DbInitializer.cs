@@ -30,26 +30,25 @@ public static class DbInitializer
             await context.SaveChangesAsync();
         }
 
-        // 3. Seed tài khoản Admin: admin / 1234 (admin@veval.edu.vn)
-        var adminEmail = "admin@veval.edu.vn";
+        // 3. Seed tài khoản Admin mặc định: admin / Admin@2026 (chỉ tạo nếu chưa tồn tại, không ghi đè mật khẩu cũ)
+        var adminEmail = "admin";
         var existingAdmin = await context.Users
             .Include(u => u.UserRoles)
-            .FirstOrDefaultAsync(u => u.Email == adminEmail || u.Email == "admin");
+            .FirstOrDefaultAsync(u => u.Email == adminEmail || u.Email == "admin@veval.edu.vn");
 
         var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.RoleName == SystemRoles.Administrator);
 
         if (adminRole != null)
         {
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword("1234", workFactor: 11);
-
             if (existingAdmin == null)
             {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword("Admin@2026", workFactor: 11);
                 var adminUser = new User
                 {
                     UserId = Guid.NewGuid(),
                     Email = adminEmail,
-                    FullName = "admin",
-                    Phone = "0900000000",
+                    FullName = "Quản trị viên Hệ thống",
+                    Phone = "0900000001",
                     PasswordHash = passwordHash,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -66,8 +65,6 @@ public static class DbInitializer
             }
             else
             {
-                existingAdmin.PasswordHash = passwordHash;
-                existingAdmin.FullName = "admin";
                 existingAdmin.IsActive = true;
                 if (!existingAdmin.UserRoles.Any(ur => ur.RoleId == adminRole.RoleId))
                 {
@@ -76,8 +73,8 @@ public static class DbInitializer
                         UserId = existingAdmin.UserId,
                         RoleId = adminRole.RoleId
                     });
+                    await context.SaveChangesAsync();
                 }
-                await context.SaveChangesAsync();
             }
         }
     }
