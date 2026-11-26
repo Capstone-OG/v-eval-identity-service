@@ -1,5 +1,11 @@
 # NHẬT KÝ KIỂM TRA TIẾN ĐỘ VẬN HÀNH (DAILY CHECK LOG) - V-EVAL IDENTITY SERVICE
 
+## [26/11/2026] - Chuẩn Hóa Seed Admin Trong `DbInitializer.cs` (Không Ghi Đè Mật Khẩu Hardcode `1234`)
+
+- **Cập Nhật [`DbInitializer.cs`](../V-Eval-Identity_Service.Infrastructure/Persistence/Seeds/DbInitializer.cs)**:
+  - Chuyển mật khẩu khởi tạo mặc định của tài khoản `admin` sang chuẩn bảo mật `Admin@2026` (≥ 8 ký tự, có chữ in hoa và `@`).
+  - Loại bỏ cơ chế tự động ghi đè mật khẩu và `FullName` về `1234` / `admin` mỗi lần khởi động lại service nếu tài khoản `admin` đã tồn tại trong CSDL.
+
 ## [19/11/2026] - Chuẩn Hóa Phân Giải Thực Thể Động & Dữ Liệu Thực Tế Trong Identity gRPC Service
 
 - **Chuẩn Hóa Phân Giải Dữ Liệu Học Sinh & Giáo Viên ([`IdentityGrpcService.cs`](../V-Eval-Identity_Service.API/Services/IdentityGrpcService.cs))**:
